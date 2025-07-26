@@ -118,3 +118,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+.min-h-main {
+  min-height: calc(100vh - 5rem);
+}
+
+.cl-internal-1dauvpw {
+  display: none;
+}

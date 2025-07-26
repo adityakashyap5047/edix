@@ -6,6 +6,8 @@ import { Toaster } from "sonner";
 import FloatingShapes from "@/components/floating-shapes";
 import Header from "@/components/Header";
 import { ClerkProvider } from "@clerk/nextjs";
+import { shadesOfPurple } from "@clerk/themes";
+import Footer from "@/components/Footer";
 
 const inter = Inter({subsets: ["latin"]});
 
@@ -25,16 +27,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={{
+      baseTheme: shadesOfPurple,
+    }}>
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.className}`}>
+        <body className={`${inter.className} flex flex-col min-h-screen`}>
           <ThemeProvider attribute={"class"} defaultTheme="dark" enableSystem disableTransitionOnChange>
             <Header />
-            <main className="bg-slate-900 min-h-screen text-white overflow-x-hidden">
+            <main className="bg-slate-900 flex-1 text-white overflow-x-hidden">
               <FloatingShapes />
               <Toaster richColors/>
               {children}
             </main>
+            <Footer />
           </ThemeProvider>
         </body>
       </html>
