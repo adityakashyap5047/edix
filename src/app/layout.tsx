@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import FloatingShapes from "@/components/floating-shapes";
+import Header from "@/components/Header";
 
 const inter = Inter({subsets: ["latin"]});
 
@@ -26,6 +27,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className}`}>
         <ThemeProvider attribute={"class"} defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <Header />
           <main className="bg-slate-900 min-h-screen text-white overflow-x-hidden">
             <FloatingShapes />
             <Toaster richColors/>
