@@ -7,11 +7,13 @@ import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import { useEffect } from 'react';
 import axios from 'axios';
+import { BarLoader } from 'react-spinners';
+import { LayoutDashboard } from 'lucide-react';
 
 const Header = () => {
 
     const pathName = usePathname();
-    const { isSignedIn } = useUser();
+    const { isSignedIn, isLoaded } = useUser();
 
     useEffect(() => {
         if (!isSignedIn) return;
@@ -24,6 +26,10 @@ const Header = () => {
         }
         user();
     }, [isSignedIn]);
+
+    if (pathName.includes("/editor")) {
+        return null;
+    }
 
     return (
         <header className='fixed top-6 left-1/2 transform -translate-x-1/2 z-50 text-nowrap'>
@@ -67,6 +73,12 @@ const Header = () => {
                         </SignUpButton>
                     </SignedOut>
                     <SignedIn>
+                        <Link href={"/dashboard"}>
+                            <Button variant={"glass"}>
+                                <LayoutDashboard className='h-4 w-4' />
+                                <span className='hidden md:flex'>DashBoard</span>
+                            </Button>
+                        </Link>
                         <UserButton appearance={{
                             elements: {
                                 avatarBox: "w-8 h-8",
@@ -75,6 +87,11 @@ const Header = () => {
                     </SignedIn>
                 </div>
             </div>
+            {!isLoaded && (
+                <div className='fixed bottom-0 left-0 w-full z-40 flex justify-center'>
+                    <BarLoader height={2} width={"90%"} color='#06b6d4'/>
+                </div>
+            )}
         </header>
     )
 }
