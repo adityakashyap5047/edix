@@ -1,14 +1,29 @@
 "use client";
 
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
+import { useEffect } from 'react';
+import axios from 'axios';
 
 const Header = () => {
 
     const pathName = usePathname();
+    const { isSignedIn } = useUser();
+
+    useEffect(() => {
+        if (!isSignedIn) return;
+        const user = async () => {
+            try {
+                await axios.post("/api/users");
+            } catch (error) {
+                console.error("Error adding user:", error);
+            }
+        }
+        user();
+    }, [isSignedIn]);
 
     return (
         <header className='fixed top-6 left-1/2 transform -translate-x-1/2 z-50 text-nowrap'>
