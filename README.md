@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 Vividly — Web-Based Image Editor
 
-## Getting Started
+**Edit. Enhance. Express.**  
+Vividly is a sleek, Next.js-powered image editing app built for creators, developers, and everyday users. Whether you're adjusting brightness, applying filters, or removing backgrounds — Vividly makes image editing fast, intuitive, and powerful — right from your browser.
 
-First, run the development server:
+---
+
+## 🚀 Features
+
+- ✂️ **Basic Editing**: Crop, rotate, flip, and resize images
+- 🎨 **Color Controls**: Adjust brightness, contrast, saturation, and hue
+- 🖋️ **Overlay Tools**: Add text, stickers, or freehand drawings
+- 🧠 **AI-Powered Tools** *(optional)*: Background removal, auto-enhance, smart filters
+- 🗂️ **Image Workflow**: Upload, preview, edit, and download with ease
+- 💡 **Responsive UI**: Mobile-friendly, accessible, and fast
+
+---
+
+## 🛠️ Tech Stack
+
+- **[Next.js](https://nextjs.org/)** – React Framework with SSR and routing
+- **[Tailwind CSS](https://tailwindcss.com/)** – Utility-first CSS for sleek styling
+- **[Fabric.js](http://fabricjs.com/)** / **[Konva.js](https://konvajs.org/)** – Canvas-based image manipulation
+- **[TypeScript](https://www.typescriptlang.org/)** – Typed JavaScript for better development experience
+- **[Cloudinary](https://cloudinary.com/)** *(optional)* – Cloud image storage and transformation
+
+---
+
+## 📦 Installation
 
 ```bash
+git clone https://github.com/adityakashyap5047/vividly.git
+cd vividly
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 in your browser to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🧪 Development Notes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- All edits are handled client-side using HTML Canvas.
+- You can toggle AI features by integrating APIs (e.g., remove.bg, Replicate, etc.).
+- Add support for image export in formats like PNG, JPG, WebP, etc.
 
-## Learn More
+## 📁 Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+vividly/
+├── components/         # Reusable UI components (Editor, Toolbar, etc.)
+├── pages/              # Next.js pages
+├── public/             # Static assets
+├── styles/             # Tailwind & global styles
+├── utils/              # Helper functions (image processing, file handling)
+└── types/              # TypeScript types
+```
+## 🎯 Future Plans
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- ✨ Add layers and history/undo support
+- 🌈 Custom filter creation & presets
+- 🧠 Integrate AI tools (background removal, image upscaling)
+- 📱 PWA Support for offline editing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📄 License
 
-## Deploy on Vercel
+This project is licensed under the MIT License.
+Feel free to use, modify, and share!
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🙌 Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Contributions are welcome! If you have ideas for improvements or new features, feel free to fork the repo, open a pull request, or submit an issue.
+
+## 🧑‍💻 Author
+
+Made with ❤️ by Aditya Kashyap
+
+## 📸 Live Demo
+
+Coming soon...
