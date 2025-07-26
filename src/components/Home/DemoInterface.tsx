@@ -17,7 +17,7 @@ const DemoInterface = ({ textVisible }: {textVisible: boolean}) => {
             onMouseLeave={() => setDemoHovered(false)}
             style={{ perspective: "1000px" }}
         >
-            <div className="backdrop-blur-lg bg-white/10 border border-white/20 rounded-3xl p-6 transform-gpu">
+            <div className="backdrop-blur-lg bg-slate-700/10 border border-white/20 rounded-3xl p-6 transform-gpu">
                 <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-8 min-h-96">
                     <div className="flex items-center justify-between mb-6">
                     <div className="flex space-x-2">
