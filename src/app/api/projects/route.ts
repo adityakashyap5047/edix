@@ -117,3 +117,80 @@ export async function GET() {
     }
 
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const user = await currentUser();
+        
+        if (!user) {
+            return NextResponse.json(
+                { error: "User not authenticated." },
+                { status: 401 }
+            );
+        }
+
+        const existingUser = await db?.user.findUnique({
+            where: {
+                clerkUserId: user?.id
+            },
+        });
+
+        if (!existingUser) {
+            return NextResponse.json(
+                { error: "User not exist in DB." },
+                { status: 401 }
+            ); 
+        }
+
+        const { projectId } = await request.json();
+
+        if (!projectId) {
+            return NextResponse.json(
+                { error: "Project ID is required." },
+                { status: 400 }
+            );
+        }
+
+        const project = await db?.project.findUnique({
+            where: {
+                id: projectId,
+            }
+        });
+
+        if (!project) {
+            return NextResponse.json(
+                {error: "Project Not Found"},
+                {status: 404}
+            )
+        }
+
+        const deletedProject = await db?.project.delete({
+            where: {
+                id: projectId,
+            },
+        });
+
+        await db?.user.update({
+            where: {
+                id: existingUser.id,
+            },
+            data: {
+                projectsUsed: existingUser.projectsUsed - 1,
+            },
+        });
+
+        return NextResponse.json(
+            { message: "Project deleted successfully.", project: deletedProject },
+            { status: 200 }
+        );
+    } catch (error: unknown) {
+        return NextResponse.json(
+            {
+                error: (error as Error).message || "Unknown error occurred while deleting project."
+            },
+            {
+                status: 500
+            }
+        );
+    }
+}
