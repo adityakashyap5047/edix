@@ -1,5 +1,6 @@
 import FeatureSection from "@/components/Home/FeatureSection"
 import HeroSection from "@/components/Home/HeroSection"
+import Pricing from "@/components/Home/Pricing"
 import Stats from "@/components/Home/Stats"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -13,6 +14,8 @@ const page = () => {
       <Stats />
 
       <FeatureSection />
+
+      <Pricing />
 
       <section className="py-20 text-center">
         <div className="max-w-4xl mx-auto px-6">
