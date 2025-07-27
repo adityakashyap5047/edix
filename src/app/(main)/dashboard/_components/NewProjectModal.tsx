@@ -1,0 +1,244 @@
+"use client";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import useFetch from "@/hooks/useFetch";
+import { usePlanAccess } from "@/hooks/usePlanAccess";
+import { Project } from "@/types";
+import { Crown, ImageIcon, Loader2, Upload, X } from "lucide-react";
+import Image from "next/image";
+import React, { useCallback, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
+
+interface NewProjectModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [projectTitle, setProjectTitle] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+
+  const { isFree, canCreateProject } = usePlanAccess();
+
+  const { data } = useFetch<Project[]>({
+    endpoint: "/api/projects",
+  });
+
+  const { fn: createProject } = useFetch({
+    endpoint: "/api/projects",
+    method: "POST",
+  });
+
+  const projects: Project[] = Array.isArray(data) ? data : [];
+  const currentProjectCount = projects.length;
+
+  const canCreate = canCreateProject(currentProjectCount);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+      setProjectTitle(nameWithoutExt || "Untitled Project");
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
+    },
+    maxFiles: 1,
+    maxSize: 20 * 1024 * 1024,
+  });
+
+  const handleClose = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setProjectTitle("");
+    setIsUploading(false);
+    onClose();
+  };
+
+  const handleCreateProject = async () => {
+    if (!canCreate) {
+        setShowUpgradeModal(true);
+        return;
+    }
+
+    if (!selectedFile || !projectTitle.trim()) {
+        toast.error("Please upload an image and enter a project title.");
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("title", projectTitle.trim());
+    } catch (error: unknown) {
+        toast.error(
+            (error as Error).message || "Unknown error occurred while creating project."
+        );
+        return;
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-white">
+              Create New Project
+            </DialogTitle>
+
+            {isFree && (
+              <Badge variant="secondary" className="bg-slate-700 text-white/70">
+                {currentProjectCount}/3 Projects
+              </Badge>
+            )}
+          </DialogHeader>
+
+            <div className="space-y-6">
+                {isFree && currentProjectCount >= 2 && (
+                <Alert className="bg-amber-500/10 border-amber-500/20">
+                    <Crown className="h-5 w-5 text-amber-400" />
+                    <AlertDescription className="text-amber-300/80">
+                    <div className="font-semibold text-amber-400 mb-1">
+                        {currentProjectCount === 2
+                        ? "Last Free Project"
+                        : "Project Limit Reached"}
+                    </div>
+                    {currentProjectCount === 2
+                        ? "This will be your last free project. Upgrade to Vividly Pro for unlimited projects."
+                        : "Free plan is limited to 3 projects. Upgrade to Vividly Pro to create more projects."}
+                    </AlertDescription>
+                </Alert>
+                )}
+
+                {!selectedFile ? (
+                <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
+                    isDragActive
+                        ? "border-cyan-400 bg-cyan-400/5"
+                        : "border-white/20 hover:border-white/40"
+                    } ${!canCreate ? "opacity-50 pointer-events-none" : ""}`}
+                >
+                    <input {...getInputProps()} />
+                    <Upload className="h-12 w-12 text-white/50 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">
+                    {isDragActive ? "Drop your image here" : "Upload an Image"}
+                    </h3>
+                    <p className="text-white/70 mb-4">
+                    {canCreate
+                        ? "Drag and drop your image, or click to browse"
+                        : "Upgrade to Pro to create more projects"}
+                    </p>
+                    <p className="text-sm text-white/50">
+                    Supports PNG, JPG, WEBP up to 20MB
+                    </p>
+                </div>
+                ) : (
+                <div className="space-y-6">
+                    <div className="relative">
+                        <Image
+                            src={previewUrl || ""}
+                            height={48}
+                            width={48}
+                            alt="Project Preview"
+                            className="w-full h-64 object-cover rounded-xl border border-white/10"
+                        />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                            setSelectedFile(null);
+                            setPreviewUrl(null);
+                            setProjectTitle("");
+                            }}
+                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="project-title" className="text-white">
+                            Project Title
+                        </Label>
+                        <Input
+                            id="project-title"
+                            type="text"
+                            value={projectTitle}
+                            onChange={(e) => setProjectTitle(e.target.value)}
+                            placeholder="Enter project name..."
+                            className="bg-slate-700 border-white/20 text-white placeholder-white/50 focus:border-cyan-400 focus:ring-cyan-400"
+                        />
+                    </div>
+
+                    <div className="bg-slate-700/50 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                            <ImageIcon className="h-5 w-5 text-cyan-400" />
+                            <div>
+                                <p className="text-white font-medium">
+                                    {selectedFile.name}
+                                </p>
+                                <p className="text-white/70 text-sm">
+                                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                )}
+            </div>
+
+          <DialogFooter className="gap-3">
+            <Button
+              variant="glass"
+              onClick={handleClose}
+              disabled={isUploading}
+              className="text-white/70 hover:text-white"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              onClick={handleCreateProject}
+              disabled={!selectedFile || !projectTitle.trim() || isUploading}
+              variant="primary"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Project"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default NewProjectModal;
