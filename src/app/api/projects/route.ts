@@ -72,3 +72,48 @@ export async function POST(request: NextRequest){
         );
     }
 }
+
+export async function GET() {
+
+    try {
+        const user = await currentUser();
+        
+        if (!user) {
+            return NextResponse.json(
+                { error: "User not authenticated." },
+                { status: 401 }
+            );
+        }
+
+        const existingUser = await db?.user.findUnique({
+            where: {
+                clerkUserId: user?.id
+            },
+            include: {
+                projects: true,
+            },
+        });
+
+        if (!existingUser) {
+            return NextResponse.json(
+                { error: "User not exist in DB." },
+                { status: 401 }
+            ); 
+        }
+
+        return NextResponse.json(
+            { projects: existingUser.projects },
+            { status: 200 }
+        );
+    } catch (error: unknown) {
+        return NextResponse.json(
+            {
+                error: (error as Error).message || "Unknown error occurred while fetching projects."
+            },
+            {
+                status: 500
+            }
+        );
+    }
+
+}
