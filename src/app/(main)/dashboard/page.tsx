@@ -1,9 +1,36 @@
-import React from 'react'
+"use client";
 
-const page = () => {
+import useFetch from "@/hooks/useFetch";
+import { useEffect } from "react";
+
+const Page = () => {
+
+    const {
+        data: projects,
+        loading,
+        error,
+        fn: refetch
+    } = useFetch({
+        endpoint: "/api/projects",
+    });
+
+    useEffect(() => {
+        refetch();
+    }, [refetch]);
+
     return (
-        <div>page</div>
+        <div>
+            <div>
+                <div>
+                    <div>
+                        <h1>
+                            Your Projects
+                        </h1>
+                    </div>
+                </div>
+            </div>
+        </div>
     )
 }
 
-export default page
+export default Page
