@@ -139,6 +139,10 @@
   display: none;
 }
 
+.cl-internal-1tbymci:hover {
+  background-color: #7758ff !important;
+}
+
 .cl-drawerRoot {
   position: fixed;
   inset: 0;

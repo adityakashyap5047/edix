@@ -19,8 +19,10 @@ const HeroSection = () => {
    <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
         <div className="text-center z-10 px-6">
             <div className={`transition-all duration-1000 ${textVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
-                <h1 className="text-6xl md:text-9xl font-black mb-6 tracking-tight">
+                <h1 className="text-3xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight">
                     <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent animate-pulse">Create</span>
+                    <span className="text-xl sm:text-4xl md:text-5xl bg-gradient-to-r from-orange-400 via-cyan-500 to-orange-400 bg-clip-text text-transparent"> With </span>
+                    <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent animate-pulse">Vividly</span>
                     <br />
                     <span className="text-white">Without Limits</span>
                 </h1>
