@@ -62,6 +62,7 @@ export async function POST(request: NextRequest){
             { status: 201 }
         );
     } catch (error: unknown) {
+        console.error(error);
         return NextResponse.json(
             {
                 error: (error as Error).message || "Unknown error occurred while adding project."

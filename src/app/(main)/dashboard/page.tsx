@@ -1,27 +1,32 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import useFetch from "@/hooks/useFetch";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import EmptyState from "./_components/EmptyState";
 import NewProjectModal from "./_components/NewProjectModal";
+import axios from "axios";
+import { Project } from "@/types";
 
 const Page = () => {
 
     const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
-
-    const {
-        data: projects,
-        loading,
-        error,
-        fn: refetch
-    } = useFetch({
-        endpoint: "/api/projects",
-    });
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
-        refetch();
+        const fetchProjects = async() => {
+            setLoading(true);
+            try {
+                const response = await axios.get("/api/projects");
+                setProjects(response.data.projects);
+            } catch (error) {
+                console.error(`Error Fetching projects ${error instanceof Error ? error.message : String(error)}`)
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchProjects(); 
     }, []);
 
     return (
@@ -51,8 +56,9 @@ const Page = () => {
                     <div className="flex items-center justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
                     </div>
-                // ) : projects && projects?.length > 0 ? (
+                ) : projects && projects?.length > 0 ? (
                 //     <ProjectGrid projects={projects} />
+                    <div>YOu have Project</div>
                 ) : (
                     <EmptyState onCreateProject={() => setShowNewProjectModal(true)} />
                 )}

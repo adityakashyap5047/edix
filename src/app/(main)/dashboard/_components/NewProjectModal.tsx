@@ -12,14 +12,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import useFetch from "@/hooks/useFetch";
 import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { Project } from "@/types";
 import { Crown, ImageIcon, Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
-import React, { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import axios from "axios";
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -32,19 +33,24 @@ const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  const router = useRouter();
 
   const { isFree, canCreateProject } = usePlanAccess();
 
-  const { data } = useFetch<Project[]>({
-    endpoint: "/api/projects",
-  });
+  useEffect(() => {
+    const fetchProjects = async() => {
+      try {
+        const response = await axios.get("/api/projects");
+        setProjects(response.data.projects);
+      } catch (error) {
+        console.error(`Error Fetching projects ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+    fetchProjects();
+  }, []);
 
-  const { fn: createProject } = useFetch({
-    endpoint: "/api/projects",
-    method: "POST",
-  });
-
-  const projects: Project[] = Array.isArray(data) ? data : [];
   const currentProjectCount = projects.length;
 
   const canCreate = canCreateProject(currentProjectCount);
@@ -78,6 +84,7 @@ const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
   };
 
   const handleCreateProject = async () => {
+    setIsUploading(true);
     if (!canCreate) {
         setShowUpgradeModal(true);
         return;
@@ -89,14 +96,52 @@ const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
     }
 
     try {
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-        formData.append("title", projectTitle.trim());
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("fileName", selectedFile.name);
+
+      const { data: image } = await axios.post("/api/imagekit", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        }
+      });
+
+      if(!image || !image.success) {
+        toast.error("Failed to upload image. Please try again.");
+        throw new Error(image.error || "Failed to upload image");
+      }
+
+      const response = await axios.post("/api/projects", {
+        title: projectTitle.trim(),
+        originalImageUrl: image.url,
+        currentImageUrl: image.url,
+        thumbnailUrl: image.thumbnailUrl,
+        width: image.width || 800,
+        height: image.height || 600,
+        canvasState: null
+      }, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      const { project } = response.data;
+
+      toast.success("Project Created Successfully 😊")
+
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setProjectTitle("");
+      setIsUploading(false);
+
+      router.push(`/editor/${project.id}`)
+
     } catch (error: unknown) {
         toast.error(
             (error as Error).message || "Unknown error occurred while creating project."
         );
-        return;
+    } finally{
+      setIsUploading(false);
     }
   };
 
