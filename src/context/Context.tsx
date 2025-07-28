@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useState } from 'react';
+import { createContext, useContext } from 'react';
 import { Canvas } from 'fabric';
 
 interface CanvasContextType {
