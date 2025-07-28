@@ -1,6 +1,16 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, ReactNode, useState } from 'react';
+import { Canvas } from 'fabric';
 
-export const CanvasContext = createContext({});
+interface CanvasContextType {
+    canvasEditor: Canvas | null;
+    setCanvasEditor: (canvas: Canvas | null) => void;
+    activeTool: string;
+    onToolChange: (tool: string) => void;
+    processingMessage: string | null;
+    setProcessingMessage: (message: string | null) => void;
+}
+
+export const CanvasContext = createContext<CanvasContextType | null>(null);
 
 export const useCanvas = () => {
 
