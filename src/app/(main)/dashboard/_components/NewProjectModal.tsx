@@ -20,7 +20,8 @@ import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -55,6 +56,13 @@ const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
 
   const canCreate = canCreateProject(currentProjectCount);
 
+  useEffect(() => {
+    if (isOpen && !canCreate) {
+      setShowUpgradeModal(true);
+      onClose();
+    }
+  }, [isOpen, canCreate, onClose]);
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
@@ -86,8 +94,8 @@ const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
   const handleCreateProject = async () => {
     setIsUploading(true);
     if (!canCreate) {
-        setShowUpgradeModal(true);
-        return;
+      setShowUpgradeModal(true);
+      return;
     }
 
     if (!selectedFile || !projectTitle.trim()) {
@@ -128,19 +136,21 @@ const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
       const { project } = response.data;
 
       toast.success("Project Created Successfully 😊")
-
+      
       setSelectedFile(null);
       setPreviewUrl(null);
       setProjectTitle("");
       setIsUploading(false);
-
+      
       router.push(`/editor/${project.id}`)
 
-    } catch (error: unknown) {
-        toast.error(
-            (error as Error).message || "Unknown error occurred while creating project."
-        );
-    } finally{
+    } catch (error) {
+      const axiosError = error as AxiosError<{ error?: string }>;
+      console.error('Error creating project:', axiosError.response?.data || error);
+      toast.error(
+        axiosError.response?.data.error || "Unknown error occurred while creating project."
+      );
+    } finally {
       setIsUploading(false);
     }
   };
@@ -282,6 +292,13 @@ const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        restrictedTool="projects"
+        reason="Free plan is limited to 3 projects. Upgrade to pro for unlimited projects and access to all AI editing tools."
+      />
     </>
   );
 };
