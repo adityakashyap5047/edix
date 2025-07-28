@@ -1,9 +1,10 @@
 "use client";
 
 import { CanvasContext } from "@/context/Context";
+import axios from "axios";
 import { Monitor } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Page = () => {
 
@@ -14,6 +15,14 @@ const Page = () => {
     const [processingMessage, setProcessingMessage] = useState<string | null>(null);
 
     const [activeTool, setActiveTool] = useState<string>("resize");
+
+    useEffect(() => {
+        const getProject = async () => {
+            const response = await axios.get(`/api/projects/${projId}`);
+            console.log("Project data:", response.data);
+        }
+        getProject();
+    }, [projId])
 
     return <CanvasContext.Provider value={{ 
         canvasEditor,
