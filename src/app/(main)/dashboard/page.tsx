@@ -7,6 +7,7 @@ import EmptyState from "./_components/EmptyState";
 import NewProjectModal from "./_components/NewProjectModal";
 import axios from "axios";
 import { Project } from "@/types";
+import ProjectGrid from "./_components/ProjectGrid";
 
 const Page = () => {
 
@@ -46,6 +47,7 @@ const Page = () => {
                         variant="primary"
                         size="lg"
                         className="gap-2"
+                        disabled={loading}
                     >
                         <Plus className="h-5 w-5" />
                         New Project
@@ -57,8 +59,7 @@ const Page = () => {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
                     </div>
                 ) : projects && projects?.length > 0 ? (
-                //     <ProjectGrid projects={projects} />
-                    <div>YOu have Project</div>
+                    <ProjectGrid projects={projects} setProjects={setProjects} />
                 ) : (
                     <EmptyState onCreateProject={() => setShowNewProjectModal(true)} />
                 )}
@@ -66,6 +67,7 @@ const Page = () => {
                 <NewProjectModal
                     isOpen={showNewProjectModal}
                     onClose={() => setShowNewProjectModal(false)}
+                    projects={projects}
                 />
             </div>
         </div>

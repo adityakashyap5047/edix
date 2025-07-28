@@ -26,31 +26,19 @@ import UpgradeModal from "@/components/UpgradeModal";
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
+  projects: Project[];
 }
 
-const NewProjectModal = ({ isOpen, onClose }: NewProjectModalProps) => {
+const NewProjectModal = ({ isOpen, onClose, projects }: NewProjectModalProps) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [projectTitle, setProjectTitle] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
-  const [projects, setProjects] = useState<Project[]>([]);
 
   const router = useRouter();
 
   const { isFree, canCreateProject } = usePlanAccess();
-
-  useEffect(() => {
-    const fetchProjects = async() => {
-      try {
-        const response = await axios.get("/api/projects");
-        setProjects(response.data.projects);
-      } catch (error) {
-        console.error(`Error Fetching projects ${error instanceof Error ? error.message : String(error)}`)
-      }
-    }
-    fetchProjects();
-  }, []);
 
   const currentProjectCount = projects.length;
 
