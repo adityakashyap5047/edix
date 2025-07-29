@@ -142,8 +142,6 @@ const ResizeControls = ({project}: {project: Project}) => {
       const centerX = newWidth / 2;
       const centerY = newHeight / 2;
       
-      console.log(`Centering objects at: ${centerX}, ${centerY} (Canvas: ${newWidth}x${newHeight})`);
-      
       objects.forEach(obj => {
         // Set object to exact center of new canvas dimensions
         obj.set({
@@ -152,8 +150,7 @@ const ResizeControls = ({project}: {project: Project}) => {
           originX: 'center',
           originY: 'center'
         });
-        obj.setCoords(); // Update object coordinates
-        console.log(`Object centered at: ${obj.left}, ${obj.top}`);
+        obj.setCoords();
       });
       
       // Force a render to apply centering
@@ -186,7 +183,6 @@ const ResizeControls = ({project}: {project: Project}) => {
         canvasEditor.requestRenderAll();
       }
 
-      toast.success(`Canvas resized to ${newWidth} × ${newHeight}!`);
 
     } catch (error) {
       console.error("Error resizing canvas:", error);
