@@ -17,7 +17,7 @@ const CanvasEditor = ({project}: {project: Project}) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasInstanceRef = useRef<Canvas | null>(null);
 
-    const { canvasEditor, setCanvasEditor } = useCanvas();
+    const { canvasEditor, setCanvasEditor, activeTool } = useCanvas();
 
     const calculateViewportScale = useCallback(() => {
         if (!containerRef.current || !project) return 1;
@@ -244,6 +244,22 @@ const CanvasEditor = ({project}: {project: Project}) => {
         };
 
     }, [project, calculateViewportScale, setCanvasEditor]);
+
+    useEffect(() => {
+        if (!canvasEditor || !containerRef.current) return;
+
+        switch (activeTool) {
+            case "crop":
+                // Crop tool shows crosshair cursor for precision selection
+                canvasEditor.defaultCursor = "crosshair";
+                canvasEditor.hoverCursor = "crosshair";
+                break;
+            default:
+                // Default tool shows standard cursor
+                canvasEditor.defaultCursor = "default";
+                canvasEditor.hoverCursor = "move";
+        }
+    }, [activeTool, canvasEditor, containerRef]);
 
     return (
         <div 

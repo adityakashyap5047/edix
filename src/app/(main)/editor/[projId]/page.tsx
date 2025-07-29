@@ -1,7 +1,7 @@
 "use client";
 
 import { CanvasContext } from "@/context/Context";
-import { Project } from "@/types";
+import { Project, ToolId } from "@/types";
 import axios, { AxiosError } from "axios";
 import { Loader2, Monitor } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -21,7 +21,7 @@ const Page = () => {
     const [canvasEditor, setCanvasEditor] = useState<Canvas | null>(null);
     const [processingMessage, setProcessingMessage] = useState<string | null>(null);
 
-    const [activeTool, setActiveTool] = useState<string>("resize");
+    const [activeTool, setActiveTool] = useState<ToolId>("resize");
 
     const [project, setProject] = useState<Project | null>(null);
     const [fetchingProject, setFetchingProject] = useState<boolean>(true);
