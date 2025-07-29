@@ -122,6 +122,8 @@ const CanvasEditor = ({project}: {project: Project}) => {
     useEffect(() => {
         if (!canvasRef.current || !project || canvasEditor) return;
         
+        let canvasInstance: Canvas | null = null;
+        
         const initializeCanvas = async () => {
             setIsLoading(true);
 
@@ -145,6 +147,8 @@ const CanvasEditor = ({project}: {project: Project}) => {
                 renderOnAddRemove: true, // Auto-render when objects are added/removed 
                 skipTargetFind: false, // Allow object targeting for interaction
             });
+
+            canvasInstance = canvas;
 
             canvas.setDimensions({
                 width: project.width * viewportScale, // Scaled display width
@@ -237,13 +241,16 @@ const CanvasEditor = ({project}: {project: Project}) => {
 
         // Cleanup function
         return () => {
-            if (canvasEditor) {
-                canvasEditor.dispose();
-                setCanvasEditor(null);
+            // Clean up the canvas instance if it exists
+            if (canvasInstance) {
+                canvasInstance.dispose();
+                canvasInstance = null;
             }
+            setCanvasEditor(null);
         };
 
-    }, [project, calculateViewportScale, canvasEditor, setCanvasEditor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [project, calculateViewportScale, setCanvasEditor]);
 
     // Switch cursor based on active tool
     useEffect(() => {
