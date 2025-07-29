@@ -17,19 +17,29 @@ const CanvasEditor = ({project}: {project: Project}) => {
 
     const { canvasEditor, setCanvasEditor, activeTool } = useCanvas();
 
-    const calculateViewportScale = useCallback(() => {
-        if (!containerRef.current || !project) return 1;
+    const calculateCanvasDimensions = useCallback(() => {
+        if (!containerRef.current || !project) return { 
+            canvasWidth: project?.width || 800, 
+            canvasHeight: project?.height || 600, 
+            scale: 1 
+        };
 
         const container = containerRef.current;
-        const containerWidth = container.clientWidth - 40; // 40px padding
-        const containerHeight = container.clientHeight - 40;
+        // Use 80% of container dimensions for canvas editing space
+        const availableWidth = (container.clientWidth - 40) * 0.8; // 80% of width minus padding
+        const availableHeight = (container.clientHeight - 40) * 0.8; // 80% of height minus padding
 
-        const scaleX = containerWidth / project.width;
-        const scaleY = containerHeight / project.height;
+        // Calculate scale to fit the project within 80% space while maintaining aspect ratio
+        const scaleX = availableWidth / project.width;
+        const scaleY = availableHeight / project.height;
+        const scale = Math.min(scaleX, scaleY, 1);
 
-        // Use the smaller scale to ensure the canvas fits completely
-        // Cap at 1 to prevent upscaling beyond original size
-        return Math.min(scaleX, scaleY, 1);
+        // Use the 80% space as canvas dimensions
+        return {
+            canvasWidth: availableWidth,
+            canvasHeight: availableHeight,
+            scale
+        };
     }, [containerRef, project]);
 
     const savedCanvasState = useCallback(async () => {
@@ -61,18 +71,18 @@ const CanvasEditor = ({project}: {project: Project}) => {
         const handleResize = () => {
             if (!canvasEditor || !project) return;
 
-            // Recalculate optimal scale for new window size
-            const newScale = calculateViewportScale();
+            // Recalculate optimal dimensions for new window size
+            const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
 
             // Update canvas dimensions based on new scale
             canvasEditor.setDimensions({
-                width: project.width * newScale,
-                height: project.height * newScale,
+                width: canvasWidth,
+                height: canvasHeight,
             }, {
                 backstoreOnly: false
             });
 
-            canvasEditor.setZoom(newScale);
+            canvasEditor.setZoom(scale);
             canvasEditor.calcOffset(); // Recalculate offsets for new dimensions
             canvasEditor.requestRenderAll(); // Force re-render to apply changes
         };
@@ -80,7 +90,7 @@ const CanvasEditor = ({project}: {project: Project}) => {
         window.addEventListener("resize", handleResize);
 
         return () => window.removeEventListener("resize", handleResize);
-    }, [canvasEditor, project, calculateViewportScale]);
+    }, [canvasEditor, project, calculateCanvasDimensions]);
 
     // Auto Save
     useEffect(() => {
@@ -127,11 +137,11 @@ const CanvasEditor = ({project}: {project: Project}) => {
         const initializeCanvas = async () => {
             setIsLoading(true);
 
-            const viewportScale = calculateViewportScale();
+            const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
 
             const canvas = new Canvas(canvasRef.current!, {
-                width: project.width,    // logical canvas width(design dimension)
-                height: project.height, // logical canvas height(design dimension)
+                width: canvasWidth,    // Use 80% of container width
+                height: canvasHeight, // Use 80% of container height
 
                 backgroundColor: "#fff",    // Default white background
 
@@ -151,21 +161,21 @@ const CanvasEditor = ({project}: {project: Project}) => {
             canvasInstance = canvas;
 
             canvas.setDimensions({
-                width: project.width * viewportScale, // Scaled display width
-                height: project.height * viewportScale, // Scaled display height
+                width: canvasWidth, // Display width using 80% of container
+                height: canvasHeight, // Display height using 80% of container
             }, {
                 backstoreOnly: false
             })
 
-            // Apply zoom to scale the entire canvas content
-            canvas.setZoom(viewportScale);
+            // Apply zoom to scale the content appropriately
+            canvas.setZoom(scale);
 
             // High DPI handling
             const scaleFactor = window.devicePixelRatio || 1;
             if (scaleFactor > 1) {
-                // Increase canvas resolution for high DPI desplays
-                canvas.getElement().width = project.width * scaleFactor;
-                canvas.getElement().height = project.height * scaleFactor;
+                // Increase canvas resolution for high DPI displays
+                canvas.getElement().width = canvasWidth * scaleFactor;
+                canvas.getElement().height = canvasHeight * scaleFactor;
                 // Scale the drawing context to match
                 canvas.getContext().scale(scaleFactor, scaleFactor);
             }
@@ -179,28 +189,28 @@ const CanvasEditor = ({project}: {project: Project}) => {
                         crossOrigin: "anonymous", // Handle CORS for external images
                     })
 
-                    // Calculate scaling to fit image within canvas while maintaining aspect ratio
+                    // Calculate scaling to fit image within the project dimensions
                     const imgAspectRatio = fabricImage.width / fabricImage.height;
-                    const canvasAspectRatio = project.width / project.height;
+                    const projectAspectRatio = project.width / project.height;
                     let scaleX, scaleY;
 
-                    if (imgAspectRatio > canvasAspectRatio) {
-                        // Image is wider than canvas - scale based on width
+                    if (imgAspectRatio > projectAspectRatio) {
+                        // Image is wider than project - scale based on width
                         scaleX = project.width / fabricImage.width;
                         scaleY = scaleX;    // Maintain aspect ratio
                     } else {
-                        // Image is taller than canvas - scale based on height
+                        // Image is taller than project - scale based on height
                         scaleY = project.height / fabricImage.height;
                         scaleX = scaleY;    // Maintain aspect ratio
                     }
 
                     fabricImage.set({
-                        left: project.width / 2, // Center horizontally
-                        top: project.height / 2, // Center vertically
+                        left: canvasWidth / 2, // Center horizontally in the larger canvas
+                        top: canvasHeight / 2, // Center vertically in the larger canvas
                         originX: "center", // Transform origin at center
                         originY: "center", // Transform origin at center
-                        scaleX,// Horizontal scale factor
-                        scaleY, // Vertical scale factor
+                        scaleX: scaleX * scale,// Horizontal scale factor adjusted for canvas scale
+                        scaleY: scaleY * scale, // Vertical scale factor adjusted for canvas scale
                         selectable: true, // Allow user to select/move image
                         evented: true, // Enable mouse/touch events
                     })
@@ -250,7 +260,7 @@ const CanvasEditor = ({project}: {project: Project}) => {
         };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [project, calculateViewportScale, setCanvasEditor]);
+    }, [project, calculateCanvasDimensions, setCanvasEditor]);
 
     // Switch cursor based on active tool
     useEffect(() => {
