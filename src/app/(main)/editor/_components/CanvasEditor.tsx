@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 const CanvasEditor = ({project}: {project: Project}) => {
 
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isInitialized, setIsInitialized] = useState<boolean>(false);
+    const initializationRef = useRef<string | null>(null);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -36,12 +36,29 @@ const CanvasEditor = ({project}: {project: Project}) => {
     useEffect(() => {
         if (!canvasRef.current || !project) return;
         
-        // Only initialize if we haven't already initialized
-        if (isInitialized) return;
+        // Only initialize if we haven't already initialized for this project
+        if (initializationRef.current === project.id) return;
         
-        console.log("Initializing canvas editor...");
         const initializeCanvas = async () => {
             setIsLoading(true);
+
+            // Dispose any existing canvas first
+            if (canvasInstanceRef.current) {
+                canvasInstanceRef.current.dispose();
+                canvasInstanceRef.current = null;
+            }
+
+            // Create a fresh canvas element to avoid Fabric.js tracking issues
+            if (canvasRef.current) {
+                const parent = canvasRef.current.parentNode;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.id = 'canvas';
+                newCanvas.className = 'border';
+                if (parent) {
+                    parent.replaceChild(newCanvas, canvasRef.current);
+                    canvasRef.current = newCanvas;
+                }
+            }
 
             const viewportScale = calculateViewportScale();
 
@@ -144,7 +161,7 @@ const CanvasEditor = ({project}: {project: Project}) => {
             canvas.requestRenderAll();
             canvasInstanceRef.current = canvas;
             setCanvasEditor(canvas);
-            setIsInitialized(true);
+            initializationRef.current = project.id;
 
             setTimeout(() => {
                 // workaround for initial resize issues
@@ -156,19 +173,20 @@ const CanvasEditor = ({project}: {project: Project}) => {
 
         initializeCanvas();
 
-    }, [project, calculateViewportScale, setCanvasEditor, isInitialized]);
-
-    // Separate cleanup effect
-    useEffect(() => {
+        // Cleanup function
         return () => {
             if (canvasInstanceRef.current) {
                 canvasInstanceRef.current.dispose();
                 canvasInstanceRef.current = null;
                 setCanvasEditor(null);
-                setIsInitialized(false);
             }
         };
-    }, [setCanvasEditor]);
+
+    }, [project, calculateViewportScale, setCanvasEditor]);
+
+    // Remove the project change effect since we're using ref instead
+
+    // Remove the separate cleanup effect since it's now handled above
 
     return (
         <div 
