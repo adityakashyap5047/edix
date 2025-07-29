@@ -172,6 +172,11 @@ const AdjustControls = ({}: {project: Project}) => {
                 canvasEditor?.requestRenderAll();
                 setTimeout(resolve, 50);
             })
+
+            // Trigger canvas modification event to auto-save the changes
+            if (canvasEditor) {
+                canvasEditor.fire('object:modified', { target: imageObject });
+            }
         } catch (error) {
             console.error("Error applying filters:", error);
         } finally {
