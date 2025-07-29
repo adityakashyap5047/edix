@@ -17,7 +17,7 @@ const CanvasEditor = ({project}: {project: Project}) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasInstanceRef = useRef<Canvas | null>(null);
 
-    const { canvasEditor, setCanvasEditor, activeTool, onToolChange } = useCanvas();
+    const { canvasEditor, setCanvasEditor } = useCanvas();
 
     const calculateViewportScale = useCallback(() => {
         if (!containerRef.current || !project) return 1;

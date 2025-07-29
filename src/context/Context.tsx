@@ -1,11 +1,12 @@
 import { createContext, useContext } from 'react';
 import { Canvas } from 'fabric';
+import { ToolId } from '@/types';
 
 interface CanvasContextType {
     canvasEditor: Canvas | null;
     setCanvasEditor: (canvas: Canvas | null) => void;
-    activeTool: string;
-    onToolChange: (tool: string) => void;
+    activeTool: ToolId;
+    onToolChange: (tool: ToolId) => void;
     processingMessage: string | null;
     setProcessingMessage: (message: string | null) => void;
 }
