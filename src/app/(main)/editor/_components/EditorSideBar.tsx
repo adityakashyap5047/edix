@@ -75,7 +75,7 @@ const EditorSideBar = ({project}: {project: Project}) => {
       </div>
 
       {/* Sidebar Content */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 overflow-y-auto">
         {renderToolContent(activeTool, project)}
       </div>
     </div>
@@ -85,7 +85,7 @@ const EditorSideBar = ({project}: {project: Project}) => {
 function renderToolContent(activeTool: ToolId, project: Project) {
   switch (activeTool) {
     case 'resize':
-      return <ResizeControls />;
+      return <ResizeControls project={project} />;
     case 'crop':
       return <CropContent />;
     case 'adjust':
