@@ -11,11 +11,17 @@ import axios, { AxiosError } from 'axios';
 const CanvasEditor = ({project}: {project: Project}) => {
 
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isResizing, setIsResizing] = useState<boolean>(false);
+    const [resizeDirection, setResizeDirection] = useState<string>('');
+    const [dragStart, setDragStart] = useState<{x: number, y: number, width: number, height: number}>({x: 0, y: 0, width: 0, height: 0});
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
     const { canvasEditor, setCanvasEditor, activeTool } = useCanvas();
+
+    const canvasScale = 100;
 
     const calculateCanvasDimensions = useCallback(() => {
         if (!containerRef.current || !project) return { 
@@ -25,22 +31,175 @@ const CanvasEditor = ({project}: {project: Project}) => {
         };
 
         const container = containerRef.current;
-        // Use 80% of container dimensions for canvas editing space
-        const availableWidth = (container.clientWidth - 40) * 0.8; // 80% of width minus padding
-        const availableHeight = (container.clientHeight - 40) * 0.8; // 80% of height minus padding
+        // Use user-defined percentage of container dimensions for canvas editing space
+        const scalePercentage = canvasScale / 100;
+        const availableWidth = (container.clientWidth - 40) * scalePercentage;
+        const availableHeight = (container.clientHeight - 40) * scalePercentage;
 
-        // Calculate scale to fit the project within 80% space while maintaining aspect ratio
+        // Calculate scale to fit the project within the available space while maintaining aspect ratio
         const scaleX = availableWidth / project.width;
         const scaleY = availableHeight / project.height;
         const scale = Math.min(scaleX, scaleY, 1);
 
-        // Use the 80% space as canvas dimensions
+        // Use the calculated space as canvas dimensions
         return {
             canvasWidth: availableWidth,
             canvasHeight: availableHeight,
             scale
         };
-    }, [containerRef, project]);
+    }, [containerRef, project, canvasScale]);
+
+    // Mouse event handlers for canvas resizing
+    const handleMouseDown = useCallback((e: React.MouseEvent, direction: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!canvasEditor || !canvasWrapperRef.current) return;
+        
+        const currentWidth = canvasEditor.getWidth();
+        const currentHeight = canvasEditor.getHeight();
+        
+        setIsResizing(true);
+        setResizeDirection(direction);
+        setDragStart({
+            x: e.clientX,
+            y: e.clientY,
+            width: currentWidth,
+            height: currentHeight
+        });
+        
+        // Disable canvas interaction during resize
+        canvasEditor.selection = false;
+        canvasEditor.defaultCursor = 'default';
+    }, [canvasEditor]);
+
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (!isResizing || !canvasEditor || !canvasWrapperRef.current) return;
+
+        const deltaX = e.clientX - dragStart.x;
+        const deltaY = e.clientY - dragStart.y;
+        
+        let newWidth = dragStart.width;
+        let newHeight = dragStart.height;
+        
+        // Calculate new dimensions based on resize direction
+        switch (resizeDirection) {
+            case 'right':
+                newWidth = dragStart.width + deltaX;
+                break;
+            case 'left':
+                newWidth = dragStart.width - deltaX;
+                break;
+            case 'bottom':
+                newHeight = dragStart.height + deltaY;
+                break;
+            case 'top':
+                newHeight = dragStart.height - deltaY;
+                break;
+            case 'bottom-right':
+                newWidth = dragStart.width + deltaX;
+                newHeight = dragStart.height + deltaY;
+                break;
+            case 'bottom-left':
+                newWidth = dragStart.width - deltaX;
+                newHeight = dragStart.height + deltaY;
+                break;
+            case 'top-right':
+                newWidth = dragStart.width + deltaX;
+                newHeight = dragStart.height - deltaY;
+                break;
+            case 'top-left':
+                newWidth = dragStart.width - deltaX;
+                newHeight = dragStart.height - deltaY;
+                break;
+        }
+        
+        // Apply constraints
+        const minSize = 50;
+        const maxWidth = containerRef.current ? containerRef.current.clientWidth - 50 : 1200;
+        const maxHeight = containerRef.current ? containerRef.current.clientHeight - 50 : 800;
+        
+        newWidth = Math.max(minSize, Math.min(newWidth, maxWidth));
+        newHeight = Math.max(minSize, Math.min(newHeight, maxHeight));
+        
+        // Update canvas dimensions
+        canvasEditor.setDimensions({
+            width: newWidth,
+            height: newHeight,
+        });
+        
+        // Re-center all objects
+        const objects = canvasEditor.getObjects();
+        objects.forEach(obj => {
+            const centerX = newWidth / 2;
+            const centerY = newHeight / 2;
+            obj.set({
+                left: centerX,
+                top: centerY,
+            });
+            canvasEditor.centerObject(obj);
+        });
+        
+        canvasEditor.calcOffset();
+        canvasEditor.requestRenderAll();
+    }, [isResizing, resizeDirection, canvasEditor, dragStart]);
+
+    const handleMouseUp = useCallback(() => {
+        if (!canvasEditor) return;
+        
+        setIsResizing(false);
+        setResizeDirection('');
+        
+        // Re-enable canvas interaction
+        canvasEditor.selection = true;
+        canvasEditor.defaultCursor = 'default';
+        
+        // Trigger auto-save after resize by calling savedCanvasState directly
+        // Auto-save will be triggered by the existing canvas change listeners
+    }, [canvasEditor]);
+
+    // Add global mouse event listeners
+    useEffect(() => {
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+        }
+    }, [isResizing, handleMouseMove, handleMouseUp]);
+
+    // Effect to update canvas when scale changes
+    useEffect(() => {
+        if (!canvasEditor || !project) return;
+
+        // Recalculate dimensions with new scale
+        const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
+
+        // Update canvas dimensions
+        canvasEditor.setDimensions({
+            width: canvasWidth,
+            height: canvasHeight,
+        }, {
+            backstoreOnly: false
+        });
+
+        canvasEditor.setZoom(scale);
+        
+        // Center all objects in the new canvas size
+        const objects = canvasEditor.getObjects();
+        objects.forEach(obj => {
+            obj.set({
+                left: canvasWidth / 2,
+                top: canvasHeight / 2,
+            });
+            canvasEditor.centerObject(obj);
+        });
+
+        canvasEditor.calcOffset();
+        canvasEditor.requestRenderAll();
+    }, [canvasScale, canvasEditor, project, calculateCanvasDimensions]);
 
     const savedCanvasState = useCallback(async () => {
         if (!canvasEditor || !project) {
@@ -140,8 +299,8 @@ const CanvasEditor = ({project}: {project: Project}) => {
             const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
 
             const canvas = new Canvas(canvasRef.current!, {
-                width: canvasWidth,    // Use 80% of container width
-                height: canvasHeight, // Use 80% of container height
+                width: canvasWidth,    // Use full container width
+                height: canvasHeight, // Use full container height
 
                 backgroundColor: "#fff",    // Default white background
 
@@ -161,8 +320,8 @@ const CanvasEditor = ({project}: {project: Project}) => {
             canvasInstance = canvas;
 
             canvas.setDimensions({
-                width: canvasWidth, // Display width using 80% of container
-                height: canvasHeight, // Display height using 80% of container
+                width: canvasWidth, // Display width using full container
+                height: canvasHeight, // Display height using full container
             }, {
                 backstoreOnly: false
             })
@@ -305,8 +464,65 @@ const CanvasEditor = ({project}: {project: Project}) => {
                 </div>
             </div>}
 
-            <div className='px-5'>
-                <canvas id="canvas" ref={canvasRef} className='border' />
+            <div className='relative'>
+                {/* Canvas wrapper with resize handles */}
+                <div ref={canvasWrapperRef} className='relative inline-block'>
+                    <canvas id="canvas" ref={canvasRef} className='border border-gray-300' />
+                    
+                    {/* Resize handles */}
+                    {canvasEditor && !isLoading && (
+                        <>
+                            {/* Edge resize zones (invisible areas along entire edges) */}
+                            <div
+                                className='absolute -top-2 left-0 right-0 h-4 cursor-n-resize'
+                                onMouseDown={(e) => handleMouseDown(e, 'top')}
+                                title="Resize from top edge"
+                            />
+                            <div
+                                className='absolute -bottom-2 left-0 right-0 h-4 cursor-s-resize'
+                                onMouseDown={(e) => handleMouseDown(e, 'bottom')}
+                                title="Resize from bottom edge"
+                            />
+                            <div
+                                className='absolute -left-2 top-0 bottom-0 w-4 cursor-w-resize'
+                                onMouseDown={(e) => handleMouseDown(e, 'left')}
+                                title="Resize from left edge"
+                            />
+                            <div
+                                className='absolute -right-2 top-0 bottom-0 w-4 cursor-e-resize'
+                                onMouseDown={(e) => handleMouseDown(e, 'right')}
+                                title="Resize from right edge"
+                            />
+                            
+                            {/* Corner resize zones (invisible areas for diagonal resizing) */}
+                            <div
+                                className='absolute -top-2 -left-2 w-4 h-4 cursor-nw-resize z-10'
+                                onMouseDown={(e) => handleMouseDown(e, 'top-left')}
+                                title="Resize from top-left corner"
+                            />
+                            <div
+                                className='absolute -top-2 -right-2 w-4 h-4 cursor-ne-resize z-10'
+                                onMouseDown={(e) => handleMouseDown(e, 'top-right')}
+                                title="Resize from top-right corner"
+                            />
+                            <div
+                                className='absolute -bottom-2 -left-2 w-4 h-4 cursor-sw-resize z-10'
+                                onMouseDown={(e) => handleMouseDown(e, 'bottom-left')}
+                                title="Resize from bottom-left corner"
+                            />
+                            <div
+                                className='absolute -bottom-2 -right-2 w-4 h-4 cursor-se-resize z-10'
+                                onMouseDown={(e) => handleMouseDown(e, 'bottom-right')}
+                                title="Resize from bottom-right corner"
+                            />
+                            
+                            {/* Resize indicator overlay */}
+                            {isResizing && (
+                                <div className='absolute inset-0 border-2 border-blue-500 border-dashed pointer-events-none z-20' />
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     )
