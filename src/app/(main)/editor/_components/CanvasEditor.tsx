@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Canvas, FabricImage } from "fabric";
 import { toast } from 'sonner';
+import axios, { AxiosError } from 'axios';
 
 const CanvasEditor = ({project}: {project: Project}) => {
 
@@ -32,6 +33,70 @@ const CanvasEditor = ({project}: {project: Project}) => {
         // Cap at 1 to prevent upscaling beyond original size
         return Math.min(scaleX, scaleY, 1);
     }, [containerRef, project]);
+
+    const savedCanvasState = useCallback(async () => {
+        if (!canvasEditor || !project) {
+            console.log("Auto-save skipped: missing canvasEditor or project");
+            return;
+        }
+
+        try {
+            toast.info("Auto-saving project...");
+            const canvasJSON = canvasEditor.toJSON();
+
+            await axios.post(`/api/projects/${project.id}`, {
+                canvasState: canvasJSON
+            }, {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            toast.success("Project auto-saved");
+        } catch (error) {
+            const axiosError = error as AxiosError<{ error?: string }>;
+            console.error('Error saving canvas state:', axiosError.response?.data || error);
+            toast.error(axiosError.response?.data?.error || "Unknown error occurred while auto saving project.");
+        }
+    }, [canvasEditor, project]);
+
+    useEffect(() => {
+        if (!canvasEditor) {
+            return;
+        }
+
+        let saveTimeout: ReturnType<typeof setTimeout>;
+        
+        // Debounced function - wait 2 seconds after last change
+        const handleCanvasChange = () => {
+            console.log("Canvas change detected");
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                console.log("Triggering auto-save after 2 second delay");
+                savedCanvasState();
+            }, 2000); // 2 second delay
+        }
+
+        // Listen for canvas modification events
+        canvasEditor.on("object:modified", handleCanvasChange); // Object transformed/moved
+        canvasEditor.on("object:added", handleCanvasChange);    // New Object added
+        canvasEditor.on("object:removed", handleCanvasChange);  // Object deleted
+        canvasEditor.on("path:created", handleCanvasChange);    // Drawing/freehand
+        canvasEditor.on("selection:created", handleCanvasChange); // Selection events
+        canvasEditor.on("selection:updated", handleCanvasChange);   // updated selection
+        
+        // Cleanup function to remove event listeners
+        return () => {
+            console.log("Cleaning up auto-save event listeners");
+            clearTimeout(saveTimeout);
+            canvasEditor.off("object:modified", handleCanvasChange);
+            canvasEditor.off("object:added", handleCanvasChange);
+            canvasEditor.off("object:removed", handleCanvasChange);
+            canvasEditor.off("path:created", handleCanvasChange);
+            canvasEditor.off("selection:created", handleCanvasChange);
+            canvasEditor.off("selection:updated", handleCanvasChange);
+        };
+    }, [canvasEditor, savedCanvasState]);
 
     useEffect(() => {
         if (!canvasRef.current || !project) return;
@@ -183,10 +248,6 @@ const CanvasEditor = ({project}: {project: Project}) => {
         };
 
     }, [project, calculateViewportScale, setCanvasEditor]);
-
-    // Remove the project change effect since we're using ref instead
-
-    // Remove the separate cleanup effect since it's now handled above
 
     return (
         <div 
