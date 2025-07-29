@@ -10,6 +10,8 @@ import { RingLoader } from "react-spinners";
 import { toast } from "sonner";
 import CanvasEditor from "../_components/CanvasEditor";
 import { Canvas } from "fabric";
+import EditorTopBar from "../_components/EditorTopBar";
+import EditorSideBar from "../_components/EditorSideBar";
 
 const Page = () => {
 
@@ -109,9 +111,11 @@ const Page = () => {
                     </div>
                 )}
                 {/* Top Bar  */}
+                <EditorTopBar project={project} />
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar  */}
+                    <EditorSideBar project={project} />
 
                     <div className="flex-1 bg-slate-800">
                         <CanvasEditor project={project} />

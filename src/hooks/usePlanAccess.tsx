@@ -1,6 +1,5 @@
 import { useAuth } from "@clerk/nextjs";
-
-type ToolId = 'resize' | 'crop' | 'adjust' | 'text' | 'background' | 'ai_extender' | 'ai_edit';
+import { ToolId } from "@/types";
 
 export function usePlanAccess() {
   const { has } = useAuth();
@@ -9,14 +8,20 @@ export function usePlanAccess() {
   const isFree = !isPro;
 
   const planAccess: Record<ToolId, boolean> = {
+    // Free tools
     resize: true,
     crop: true,
     adjust: true,
     text: true,
 
+    // Premium tools
     background: isPro,
     ai_extender: isPro,
     ai_edit: isPro,
+
+    // Limited features
+    projects: true, // This is handled by canCreateProject function
+    export: true,   // This is handled by canExport function
   };
 
   const hasAccess = (toolId: ToolId) => {

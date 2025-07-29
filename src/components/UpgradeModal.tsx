@@ -3,27 +3,19 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Alert, AlertDescription } from "./ui/alert";
 import { PricingTable } from "@clerk/nextjs";
 import { Button } from "./ui/button";
-
-type ToolId = 'background' | 'ai_extender' | 'ai_edit' | 'projects';
+import { ToolId, TOOL_NAMES } from "@/types";
 
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   restrictedTool: ToolId;
-  reason: string;
+  reason?: string;
 }
 
 const UpgradeModal = ({isOpen, onClose, restrictedTool, reason}: UpgradeModalProps) => {
 
   const getToolName = (toolId: ToolId) => {
-    const toolNames: Record<ToolId, string> = {
-      background: "AI Background Tools",
-      ai_extender: "AI Image Extender",
-      ai_edit: "AI Editor",
-      projects: "More than 3 Projects"
-    }
-
-    return toolNames[toolId] || "Premium Feature";
+    return TOOL_NAMES[toolId] || "Premium Feature";
   }
 
   return (
