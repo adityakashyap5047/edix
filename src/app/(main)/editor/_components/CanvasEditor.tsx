@@ -11,11 +11,9 @@ import axios, { AxiosError } from 'axios';
 const CanvasEditor = ({project}: {project: Project}) => {
 
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const initializationRef = useRef<string | null>(null);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const canvasInstanceRef = useRef<Canvas | null>(null);
 
     const { canvasEditor, setCanvasEditor, activeTool } = useCanvas();
 
@@ -40,7 +38,6 @@ const CanvasEditor = ({project}: {project: Project}) => {
         }
 
         try {
-            toast.info("Auto-saving project...");
             const canvasJSON = canvasEditor.toJSON();
 
             await axios.post(`/api/projects/${project.id}`, {
@@ -59,6 +56,33 @@ const CanvasEditor = ({project}: {project: Project}) => {
         }
     }, [canvasEditor, project]);
 
+    // Handle window resize to adjust canvas dimensions
+    useEffect(() => {
+        const handleResize = () => {
+            if (!canvasEditor || !project) return;
+
+            // Recalculate optimal scale for new window size
+            const newScale = calculateViewportScale();
+
+            // Update canvas dimensions based on new scale
+            canvasEditor.setDimensions({
+                width: project.width * newScale,
+                height: project.height * newScale,
+            }, {
+                backstoreOnly: false
+            });
+
+            canvasEditor.setZoom(newScale);
+            canvasEditor.calcOffset(); // Recalculate offsets for new dimensions
+            canvasEditor.requestRenderAll(); // Force re-render to apply changes
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        return () => window.removeEventListener("resize", handleResize);
+    }, [canvasEditor, project, calculateViewportScale]);
+
+    // Auto Save
     useEffect(() => {
         if (!canvasEditor) {
             return;
@@ -71,7 +95,7 @@ const CanvasEditor = ({project}: {project: Project}) => {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
                 savedCanvasState();
-            }, 2000); // 2 second delay
+            }, 5000); // 5 second delay
         }
 
         // Listen for canvas modification events
@@ -94,32 +118,12 @@ const CanvasEditor = ({project}: {project: Project}) => {
         };
     }, [canvasEditor, savedCanvasState]);
 
+    // Initialize Canvas 
     useEffect(() => {
-        if (!canvasRef.current || !project) return;
-        
-        // Only initialize if we haven't already initialized for this project
-        if (initializationRef.current === project.id) return;
+        if (!canvasRef.current || !project || canvasEditor) return;
         
         const initializeCanvas = async () => {
             setIsLoading(true);
-
-            // Dispose any existing canvas first
-            if (canvasInstanceRef.current) {
-                canvasInstanceRef.current.dispose();
-                canvasInstanceRef.current = null;
-            }
-
-            // Create a fresh canvas element to avoid Fabric.js tracking issues
-            if (canvasRef.current) {
-                const parent = canvasRef.current.parentNode;
-                const newCanvas = document.createElement('canvas');
-                newCanvas.id = 'canvas';
-                newCanvas.className = 'border';
-                if (parent) {
-                    parent.replaceChild(newCanvas, canvasRef.current);
-                    canvasRef.current = newCanvas;
-                }
-            }
 
             const viewportScale = calculateViewportScale();
 
@@ -220,14 +224,11 @@ const CanvasEditor = ({project}: {project: Project}) => {
 
             canvas.calcOffset();
             canvas.requestRenderAll();
-            canvasInstanceRef.current = canvas;
             setCanvasEditor(canvas);
-            initializationRef.current = project.id;
 
             setTimeout(() => {
-                // workaround for initial resize issues
-                window.dispatchEvent(new Event("resize"));
-            }, 500);
+                window.dispatchEvent(new Event("resize")); // Trigger resize to adjust layout
+            }, 500); // Delay to ensure canvas is fully initialized
 
             setIsLoading(false);
         }
@@ -236,15 +237,15 @@ const CanvasEditor = ({project}: {project: Project}) => {
 
         // Cleanup function
         return () => {
-            if (canvasInstanceRef.current) {
-                canvasInstanceRef.current.dispose();
-                canvasInstanceRef.current = null;
+            if (canvasEditor) {
+                canvasEditor.dispose();
                 setCanvasEditor(null);
             }
         };
 
-    }, [project, calculateViewportScale, setCanvasEditor]);
+    }, [project, calculateViewportScale, canvasEditor, setCanvasEditor]);
 
+    // Switch cursor based on active tool
     useEffect(() => {
         if (!canvasEditor || !containerRef.current) return;
 
