@@ -69,16 +69,40 @@ const ResizeControls = ({project}: {project: Project}) => {
     const [ratioW, ratioH] = ratio;
     const originalArea = project.width * project.height;
 
-    const apectRatio = ratioW / ratioH;
+    const aspectRatio = ratioW / ratioH;
 
-    const newHeight = Math.sqrt(originalArea / apectRatio);
-    const newWidth = newHeight * apectRatio;
+    let newHeight = Math.sqrt(originalArea / aspectRatio);
+    let newWidth = newHeight * aspectRatio;
+
+    // Ensure dimensions don't exceed max limits
+    const maxWidth = 1200;
+    const maxHeight = 550;
+
+    if (newWidth > maxWidth) {
+      newWidth = maxWidth;
+      newHeight = newWidth / aspectRatio;
+    }
+
+    if (newHeight > maxHeight) {
+      newHeight = maxHeight;
+      newWidth = newHeight * aspectRatio;
+    }
 
     return { width: Math.round(newWidth), height: Math.round(newHeight) };
   };
 
   const applyAspectRatio = (aspectRatio: { name: string; ratio: [number, number]; label: string }) => {
     const dimensions = calculateAspectRatioDimensions(aspectRatio.ratio);
+    
+    // Check if dimensions were clamped due to max limits
+    const [ratioW, ratioH] = aspectRatio.ratio;
+    const expectedAspectRatio = ratioW / ratioH;
+    const actualAspectRatio = dimensions.width / dimensions.height;
+    
+    if (Math.abs(expectedAspectRatio - actualAspectRatio) > 0.01) {
+      toast.warning(`Dimensions adjusted to fit within limits (max: 1200×550px)`);
+    }
+    
     setNewWidth(dimensions.width);
     setNewHeight(dimensions.height);
     setSelectedPreset(aspectRatio.name);
@@ -93,6 +117,17 @@ const ResizeControls = ({project}: {project: Project}) => {
       return;
     }
 
+    // Validate dimensions before applying
+    if (newWidth > 1200) {
+      toast.error("Width cannot exceed 1200 pixels.");
+      return;
+    }
+
+    if (newHeight > 550) {
+      toast.error("Height cannot exceed 550 pixels.");
+      return;
+    }
+
     setProcessingMessage("Resizing canvas...");
 
     try {
@@ -101,6 +136,28 @@ const ResizeControls = ({project}: {project: Project}) => {
       
       canvasEditor.setWidth(newWidth);
       canvasEditor.setHeight(newHeight);
+
+      // Center all objects BEFORE applying zoom and scaling
+      const objects = canvasEditor.getObjects();
+      const centerX = newWidth / 2;
+      const centerY = newHeight / 2;
+      
+      console.log(`Centering objects at: ${centerX}, ${centerY} (Canvas: ${newWidth}x${newHeight})`);
+      
+      objects.forEach(obj => {
+        // Set object to exact center of new canvas dimensions
+        obj.set({
+          left: centerX,
+          top: centerY,
+          originX: 'center',
+          originY: 'center'
+        });
+        obj.setCoords(); // Update object coordinates
+        console.log(`Object centered at: ${obj.left}, ${obj.top}`);
+      });
+      
+      // Force a render to apply centering
+      canvasEditor.requestRenderAll();
 
       const canvasElement = canvasEditor.getElement();
       const container = canvasElement.closest('.bg-secondary');
@@ -114,13 +171,17 @@ const ResizeControls = ({project}: {project: Project}) => {
           ? (containerWidth - margin) / newWidth
           : (containerHeight - margin) / newHeight;
 
+        const scaledWidth = newWidth * scale;
+        const scaledHeight = newHeight * scale;
+
         canvasEditor.setDimensions({
-          width: newWidth * scale,
-          height: newHeight * scale,
+          width: scaledWidth,
+          height: scaledHeight,
         }, { backstoreOnly: false });
         
         canvasEditor.setZoom(scale);
         
+        // Recalculate offset and render
         canvasEditor.calcOffset();
         canvasEditor.requestRenderAll();
       }
