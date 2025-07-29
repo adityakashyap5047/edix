@@ -99,7 +99,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
         }
 
         const projectData = await request.json();
-        console.log("Updating project with data:", projectData);
 
         const updatedProject = await db?.project.update({
             where: {

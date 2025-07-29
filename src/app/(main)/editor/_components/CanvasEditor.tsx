@@ -36,7 +36,6 @@ const CanvasEditor = ({project}: {project: Project}) => {
 
     const savedCanvasState = useCallback(async () => {
         if (!canvasEditor || !project) {
-            console.log("Auto-save skipped: missing canvasEditor or project");
             return;
         }
 
@@ -69,10 +68,8 @@ const CanvasEditor = ({project}: {project: Project}) => {
         
         // Debounced function - wait 2 seconds after last change
         const handleCanvasChange = () => {
-            console.log("Canvas change detected");
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                console.log("Triggering auto-save after 2 second delay");
                 savedCanvasState();
             }, 2000); // 2 second delay
         }
@@ -87,7 +84,6 @@ const CanvasEditor = ({project}: {project: Project}) => {
         
         // Cleanup function to remove event listeners
         return () => {
-            console.log("Cleaning up auto-save event listeners");
             clearTimeout(saveTimeout);
             canvasEditor.off("object:modified", handleCanvasChange);
             canvasEditor.off("object:added", handleCanvasChange);
