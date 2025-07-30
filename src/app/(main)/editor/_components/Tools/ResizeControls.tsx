@@ -445,20 +445,73 @@ const ResizeControls = ({project}: {project: Project}) => {
 
       {hasChanges && (
         <div className="bg-slate-700/30 rounded-lg p-3">
-          <h4 className="text-sm font-medium text-white mb-2">
+          <h4 className="text-sm font-medium text-white mb-3">
             New Size Preview
           </h4>
-          <div className="text-xs text-white/70">
-            <div>
-              New Canvas: {newWidth} × {newHeight} pixels
+          
+          {/* Canvas Visual Preview */}
+          <div className="mb-4 flex justify-center">
+            <div className="relative p-3">
+              {/* Container representation */}
+              <div 
+                className="border-2 border-dashed border-white/30 bg-slate-900/50 relative"
+                style={{
+                  width: '120px',
+                  height: '80px',
+                }}
+              >
+                {/* Current canvas representation */}
+                <div
+                  className="absolute bg-white/20 border border-white/40"
+                  style={{
+                    width: `${Math.min(100, (project.width / Math.max(project.width, project.height)) * 80)}px`,
+                    height: `${Math.min(60, (project.height / Math.max(project.width, project.height)) * 60)}px`,
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                />
+                
+                {/* New canvas representation */}
+                <div
+                  className="absolute bg-cyan-500/40 border-2 border-cyan-400"
+                  style={{
+                    width: `${Math.min(100, (newWidth / Math.max(newWidth, newHeight)) * 80)}px`,
+                    height: `${Math.min(60, (newHeight / Math.max(newWidth, newHeight)) * 60)}px`,
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                />
+              </div>
+              
+              {/* Legend */}
+              <div className="mt-2 flex justify-center gap-4 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-white/20 border border-white/40 rounded-sm"></div>
+                  <span className="text-white/60">Current</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-cyan-500/40 border-2 border-cyan-400 rounded-sm"></div>
+                  <span className="text-cyan-400">New</span>
+                </div>
+              </div>
             </div>
-            <div className="text-cyan-400">
+          </div>
+          
+          <div className="text-xs text-white/70">
+            <div className="mb-2">
+              <span className="font-medium">New Canvas:</span> {newWidth} x {newHeight} pixels
+            </div>
+            <div className="text-cyan-400 mb-1">
               {newWidth > project.width || newHeight > project.height
                 ? "Canvas will be expanded"
-                : "Canvas will be cropped"}
+                : newWidth < project.width || newHeight < project.height
+                ? "Canvas will be cropped"
+                : "Canvas dimensions unchanged"}
             </div>
-            <div className="text-white/50 mt-1">
-              Objects will maintain their current size and position
+            <div className="text-white/50">
+              Objects will be centered in the new canvas
             </div>
           </div>
         </div>
