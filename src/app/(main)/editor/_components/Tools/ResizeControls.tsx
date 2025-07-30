@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Expand, Lock, Monitor, Unlock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import axios from "axios";
 
 const ASPECT_RATIOS = [
   { name: "Instagram Story", ratio: [9, 16], label: "9:16" },
@@ -183,6 +184,36 @@ const ResizeControls = ({project}: {project: Project}) => {
         canvasEditor.requestRenderAll();
       }
 
+      const canvasJSON = canvasEditor.toJSON();
+      
+      let updatedTransformations = "resize";
+      if (project.activeTransformations && project.activeTransformations.trim() !== "") {
+        const existingTransformations = project.activeTransformations.trim();
+        const transformationsList = existingTransformations.split('-');
+        
+        if (!transformationsList.includes("resize")) {
+          updatedTransformations = `${existingTransformations}-resize`;
+        } else {
+          updatedTransformations = existingTransformations;
+        }
+      }
+      
+      const response = await axios.post(`/api/projects/${project.id}`, {
+        width: newWidth,
+        height: newHeight,
+        canvasState: canvasJSON,
+        activeTransformations: updatedTransformations
+      }, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (response.status === 200) {
+        toast.success(`Canvas resized to ${newWidth} x ${newHeight} and auto-saved!`);
+      } else {
+        toast.error("Canvas resized but failed to auto-save. Please save manually.");
+      }
 
     } catch (error) {
       console.error("Error resizing canvas:", error);
