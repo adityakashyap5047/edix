@@ -4,6 +4,7 @@ import { Crop, Expand, Eye, Maximize2, Palette, Sliders, Text } from 'lucide-rea
 import CropContent from './Tools/CropContent';
 import ResizeControls from './Tools/ResizeControls';
 import AdjustControls from './Tools/AdjustControls';
+import AiBackground from './Tools/AiBackground';
 
 type ToolConfig = {
   title: string;
@@ -91,7 +92,7 @@ function renderToolContent(activeTool: ToolId, project: Project) {
     case 'adjust':
       return <AdjustControls project={project} />;
     case 'background':
-      return <div>Background Tool Content</div>;
+      return <AiBackground project={project} />;
     case 'ai_extender':
       return <div>AI Extender Tool Content</div>;
     case 'text':

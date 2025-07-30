@@ -174,3 +174,14 @@
 .cl-internal-15hkgn2 {
   background: #45427b;
 }
+
+.react-colorful__hue {
+  height: 5px !important;
+  margin-top: 10px !important;
+  border-radius: 2 !important;
+}
+
+.react-colorful__pointer {
+  width: 13px !important;
+  height: 13px !important;
+}
