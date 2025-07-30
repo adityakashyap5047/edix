@@ -75,7 +75,7 @@ const EditorSideBar = ({project}: {project: Project}) => {
       </div>
 
       {/* Sidebar Content */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4 overflow-y-auto" style={{scrollbarWidth: 'none'}}>
         {renderToolContent(activeTool, project)}
       </div>
     </div>

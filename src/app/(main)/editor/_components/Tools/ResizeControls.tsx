@@ -412,7 +412,12 @@ const ResizeControls = ({project}: {project: Project}) => {
 
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-white">Aspect Ratios</h3>
-        <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto px-4">
+        <div 
+          className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto px-4"
+          style={{
+            scrollbarWidth: 'none'
+          }}
+        >
           {ASPECT_RATIOS.map((aspectRatio) => {
             const dimensions = calculateAspectRatioDimensions(aspectRatio.ratio as [number, number]);
             return (
