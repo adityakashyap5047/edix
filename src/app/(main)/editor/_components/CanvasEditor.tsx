@@ -30,24 +30,92 @@ const CanvasEditor = ({project}: {project: Project}) => {
             scale: 1 
         };
 
+        // If container hasn't rendered yet, find it using canvas element
+        if (!containerRef.current) {
+            const canvasElement = canvasRef.current;
+            let container = null;
+            
+            if (canvasElement) {
+                container = canvasElement.closest('.bg-secondary');
+            }
+            
+            if (container) {
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                const margin = 40;
+                const availableWidth = containerWidth - margin;
+                const availableHeight = containerHeight - margin;
+                
+                // Check if "resize" exists in activeTransformations
+                const hasResizeTransformation = project.activeTransformations && 
+                    project.activeTransformations.split('-').includes('resize');
+
+                if (hasResizeTransformation) {
+                    // If resize transformation exists, use project dimensions with scaling
+                    const scaleX = availableWidth / project.width;
+                    const scaleY = availableHeight / project.height;
+                    const scale = Math.min(scaleX, scaleY); // Remove the cap of 1
+
+                    // Calculate scaled project dimensions
+                    const displayWidth = project.width * scale;
+                    const displayHeight = project.height * scale;
+
+                    return {
+                        canvasWidth: displayWidth,
+                        canvasHeight: displayHeight,
+                        scale
+                    };
+                } else {
+                    // If no resize transformation, use full available area
+                    return {
+                        canvasWidth: availableWidth,
+                        canvasHeight: availableHeight,
+                        scale: 1
+                    };
+                }
+            }
+            
+            // Fallback
+            return {
+                canvasWidth: project.width,
+                canvasHeight: project.height,
+                scale: 1
+            };
+        }
+
         const container = containerRef.current;
-        // Use user-defined percentage of container dimensions for canvas editing space
-        const scalePercentage = canvasScale / 100;
-        const availableWidth = (container.clientWidth - 40) * scalePercentage;
-        const availableHeight = (container.clientHeight - 40) * scalePercentage;
+        const margin = 40;
+        const availableWidth = container.clientWidth - margin;
+        const availableHeight = container.clientHeight - margin;
 
-        // Calculate scale to fit the project within the available space while maintaining aspect ratio
-        const scaleX = availableWidth / project.width;
-        const scaleY = availableHeight / project.height;
-        const scale = Math.min(scaleX, scaleY, 1);
+        // Check if "resize" exists in activeTransformations
+        const hasResizeTransformation = project.activeTransformations && 
+            project.activeTransformations.split('-').includes('resize');
 
-        // Use the calculated space as canvas dimensions
-        return {
-            canvasWidth: availableWidth,
-            canvasHeight: availableHeight,
-            scale
-        };
-    }, [containerRef, project, canvasScale]);
+        if (hasResizeTransformation) {
+            // If resize transformation exists, use project dimensions with scaling
+            const scaleX = availableWidth / project.width;
+            const scaleY = availableHeight / project.height;
+            const scale = Math.min(scaleX, scaleY); // Remove the cap of 1
+
+            // Calculate scaled project dimensions
+            const displayWidth = project.width * scale;
+            const displayHeight = project.height * scale;
+
+            return {
+                canvasWidth: displayWidth,
+                canvasHeight: displayHeight,
+                scale
+            };
+        } else {
+            // If no resize transformation, use full available area
+            return {
+                canvasWidth: availableWidth,
+                canvasHeight: availableHeight,
+                scale: 1
+            };
+        }
+    }, [containerRef, canvasRef, project]);
 
     // Mouse event handlers for canvas resizing
     const handleMouseDown = useCallback((e: React.MouseEvent, direction: string) => {
@@ -128,15 +196,10 @@ const CanvasEditor = ({project}: {project: Project}) => {
             height: newHeight,
         });
         
-        // Re-center all objects
+        // Re-center all objects during resize
         const objects = canvasEditor.getObjects();
         objects.forEach(obj => {
-            const centerX = newWidth / 2;
-            const centerY = newHeight / 2;
-            obj.set({
-                left: centerX,
-                top: centerY,
-            });
+            // Maintain relative position during resize, don't force center
             canvasEditor.centerObject(obj);
         });
         
@@ -186,17 +249,6 @@ const CanvasEditor = ({project}: {project: Project}) => {
         });
 
         canvasEditor.setZoom(scale);
-        
-        // Center all objects in the new canvas size
-        const objects = canvasEditor.getObjects();
-        objects.forEach(obj => {
-            obj.set({
-                left: canvasWidth / 2,
-                top: canvasHeight / 2,
-            });
-            canvasEditor.centerObject(obj);
-        });
-
         canvasEditor.calcOffset();
         canvasEditor.requestRenderAll();
     }, [canvasScale, canvasEditor, project, calculateCanvasDimensions]);
@@ -298,9 +350,13 @@ const CanvasEditor = ({project}: {project: Project}) => {
 
             const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
 
+            // Check if "resize" exists in activeTransformations to determine canvas creation dimensions
+            const hasResizeTransformation = project.activeTransformations && 
+                project.activeTransformations.split('-').includes('resize');
+
             const canvas = new Canvas(canvasRef.current!, {
-                width: canvasWidth,    // Use full container width
-                height: canvasHeight, // Use full container height
+                width: hasResizeTransformation ? project.width : canvasWidth,    // Use project width if resized, otherwise display width
+                height: hasResizeTransformation ? project.height : canvasHeight, // Use project height if resized, otherwise display height
 
                 backgroundColor: "#fff",    // Default white background
 
@@ -320,8 +376,8 @@ const CanvasEditor = ({project}: {project: Project}) => {
             canvasInstance = canvas;
 
             canvas.setDimensions({
-                width: canvasWidth, // Display width using full container
-                height: canvasHeight, // Display height using full container
+                width: canvasWidth, // Display width 
+                height: canvasHeight, // Display height
             }, {
                 backstoreOnly: false
             })
@@ -363,13 +419,17 @@ const CanvasEditor = ({project}: {project: Project}) => {
                         scaleX = scaleY;    // Maintain aspect ratio
                     }
 
+                    // Always position at the actual canvas center (accounting for zoom)
+                    const centerX = project.width / 2;
+                    const centerY = project.height / 2;
+
                     fabricImage.set({
-                        left: canvasWidth / 2, // Center horizontally in the larger canvas
-                        top: canvasHeight / 2, // Center vertically in the larger canvas
+                        left: centerX, // Center in project coordinates
+                        top: centerY, // Center in project coordinates
                         originX: "center", // Transform origin at center
                         originY: "center", // Transform origin at center
-                        scaleX: scaleX * scale,// Horizontal scale factor adjusted for canvas scale
-                        scaleY: scaleY * scale, // Vertical scale factor adjusted for canvas scale
+                        scaleX: scaleX, // Use original image scale
+                        scaleY: scaleY, // Use original image scale
                         selectable: true, // Allow user to select/move image
                         evented: true, // Enable mouse/touch events
                     })
@@ -386,7 +446,7 @@ const CanvasEditor = ({project}: {project: Project}) => {
             // Load saved canvas state
             if (project.canvasState) {
                 try {
-                    // Load json state - this will restore all objects and their propertie
+                    // Load json state - this will restore all objects and their properties
                     await canvas.loadFromJSON(project.canvasState);
                     canvas.requestRenderAll();  // Force re-render after loading state
                 } catch (error) {
