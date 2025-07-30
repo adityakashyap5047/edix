@@ -307,7 +307,7 @@ const ResizeControls = ({project}: {project: Project}) => {
       });
 
       if (response.status === 200) {
-        toast.success(`Canvas is Auto Saved!`);
+        toast.success(`Canvas Resized and Auto Saved!`);
       } else {
         toast.error("Canvas resized but failed to auto-save. Please save manually.");
       }
@@ -330,7 +330,7 @@ const ResizeControls = ({project}: {project: Project}) => {
             {project.width} x {project.height} pixels
           </div>
         </div>
-        <Button variant={"ghost"} size={"sm"} onClick={handleResizeReset}  className='text-white/70 hover:text-white'>
+        <Button variant={"glass"} size={"sm"} onClick={handleResizeReset}  className='text-white/70 hover:text-white'>
             <RotateCcw className='h-4 w-4 mr-2' />
             Reset
         </Button>
