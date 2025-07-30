@@ -273,7 +273,7 @@ const CropContent = () => {
   const applyAspectRatio = (ratio: number | null) => {
     setSelectedRatio(ratio);
 
-    if (!cropRect || ratio === null) return;
+    if (!cropRect || !canvasEditor || ratio === null) return;
 
     // Get current dimensions with scale
     const currentWidth = cropRect.width * cropRect.scaleX;
@@ -282,6 +282,10 @@ const CropContent = () => {
     // Calculate the center point before changing dimensions
     const centerX = cropRect.left + (cropRect.width * cropRect.scaleX) / 2;
     const centerY = cropRect.top + (cropRect.height * cropRect.scaleY) / 2;
+
+    // Temporarily deselect to clear old controls
+    canvasEditor.discardActiveObject();
+    canvasEditor.requestRenderAll();
 
     // Update the rectangle with new dimensions
     cropRect.set({
@@ -292,7 +296,15 @@ const CropContent = () => {
       top: centerY - newHeight / 2,
     });
 
-    canvasEditor?.requestRenderAll();
+    // Update coordinates and reselect to show new controls
+    cropRect.setCoords();
+    canvasEditor.setActiveObject(cropRect);
+    canvasEditor.requestRenderAll();
+    
+    // Force a second render to ensure everything is cleaned up
+    setTimeout(() => {
+      canvasEditor.requestRenderAll();
+    }, 10);
   };
 
   const applyCrop = () => {
