@@ -1,7 +1,7 @@
 "use client";
 
 import { useCanvas } from "@/context/Context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Project } from "@/types/index"
 import { Button } from "@/components/ui/button";
 import { Expand, Lock, Monitor, RotateCcw, Unlock } from "lucide-react";
@@ -18,6 +18,22 @@ const ASPECT_RATIOS = [
   { name: "Twitter Header", ratio: [3, 1], label: "3:1" },
 ];
 
+// Function to detect if current dimensions match any preset
+const detectCurrentPreset = (width: number, height: number): string | null => {
+  const currentRatio = width / height;
+  
+  for (const preset of ASPECT_RATIOS) {
+    const [ratioW, ratioH] = preset.ratio;
+    const presetRatio = ratioW / ratioH;
+    
+    // Check if ratios match within a small tolerance (0.01)
+    if (Math.abs(currentRatio - presetRatio) < 0.01) {
+      return preset.name;
+    }
+  }
+  
+  return null;
+};
 
 const ResizeControls = ({project}: {project: Project}) => {
 
@@ -26,7 +42,17 @@ const ResizeControls = ({project}: {project: Project}) => {
   const [newWidth, setNewWidth] = useState(project?.width || 800); 
   const [newHeight, setNewHeight] = useState(project?.height || 600); 
   const [lockAspectRatio, setLockAspectRatio] = useState(true); 
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null); 
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+
+  // Effect to detect and set the current preset when component loads or project changes
+  useEffect(() => {
+    if (project) {
+      const detectedPreset = detectCurrentPreset(project.width, project.height);
+      setSelectedPreset(detectedPreset);
+      setNewWidth(project.width);
+      setNewHeight(project.height);
+    }
+  }, [project]); 
 
   if (!canvasEditor || !project) {
     return (
