@@ -26,7 +26,6 @@ const detectCurrentPreset = (width: number, height: number): string | null => {
     const [ratioW, ratioH] = preset.ratio;
     const presetRatio = ratioW / ratioH;
     
-    // Check if ratios match within a small tolerance (0.01)
     if (Math.abs(currentRatio - presetRatio) < 0.01) {
       return preset.name;
     }
@@ -44,7 +43,6 @@ const ResizeControls = ({project}: {project: Project}) => {
   const [lockAspectRatio, setLockAspectRatio] = useState(true); 
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
-  // Effect to detect and set the current preset when component loads or project changes
   useEffect(() => {
     if (project) {
       const detectedPreset = detectCurrentPreset(project.width, project.height);
