@@ -4,7 +4,7 @@ import { useCanvas } from "@/context/Context";
 import { useState } from "react";
 import { Project } from "@/types/index"
 import { Button } from "@/components/ui/button";
-import { Expand, Lock, Monitor, Unlock } from "lucide-react";
+import { Expand, Lock, Monitor, RotateCcw, Unlock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import axios from "axios";
@@ -109,6 +109,103 @@ const ResizeControls = ({project}: {project: Project}) => {
     setSelectedPreset(aspectRatio.name);
   }
 
+  const handleResizeReset = async () => {
+    if (!canvasEditor || !project) {
+      return;
+    }
+
+    setProcessingMessage("Resetting canvas to full area...");
+
+    try {
+      const canvasElement = canvasEditor.getElement();
+      const container = canvasElement.closest('.bg-secondary');
+      
+      if (!container) {
+        toast.error("Could not find container for reset");
+        return;
+      }
+
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      const margin = 40;
+      
+      const availableWidth = containerWidth - margin;
+      const availableHeight = containerHeight - margin;
+      
+      setNewWidth(availableWidth);
+      setNewHeight(availableHeight);
+      setSelectedPreset(null);
+
+      canvasEditor.setWidth(availableWidth);
+      canvasEditor.setHeight(availableHeight);
+
+      const objects = canvasEditor.getObjects();
+      const centerX = availableWidth / 2;
+      const centerY = availableHeight / 2;
+      
+      objects.forEach(obj => {
+        obj.set({
+          left: centerX,
+          top: centerY,
+          originX: 'center',
+          originY: 'center'
+        });
+        obj.setCoords();
+      });
+      
+      canvasEditor.requestRenderAll();
+
+      canvasEditor.setDimensions({
+        width: availableWidth,
+        height: availableHeight,
+      }, { backstoreOnly: false });
+      
+      canvasEditor.setZoom(1);
+      
+      canvasEditor.calcOffset();
+      canvasEditor.requestRenderAll();
+
+      let updatedTransformations = "";
+      if (project.activeTransformations && project.activeTransformations.trim() !== "") {
+        const existingTransformations = project.activeTransformations.trim();
+        const transformationsList = existingTransformations.split('-');
+        
+        const filteredTransformations = transformationsList.filter(transform => transform !== "resize");
+        
+        updatedTransformations = filteredTransformations.join('-');
+      }
+
+      const canvasJSON = canvasEditor.toJSON();
+      
+      const response = await axios.post(`/api/projects/${project.id}`, {
+        width: availableWidth,
+        height: availableHeight,
+        canvasState: canvasJSON,
+        activeTransformations: updatedTransformations || null
+      }, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (response.status === 200) {
+        project.width = availableWidth;
+        project.height = availableHeight;
+        
+        toast.success(`Canvas Reset to Full Area - Auto Saved!`);
+      } else {
+        toast.error("Failed to Auto Saved. Please save manually.");
+      }
+
+    } catch (error) {
+      console.error("Error resetting canvas:", error);
+      toast.error("Failed to reset canvas. Please try again.");
+      
+    } finally {
+      setProcessingMessage(null);
+    }
+  }
+
   const handleApplyResize = async () => {
     if (
       !canvasEditor ||
@@ -210,7 +307,7 @@ const ResizeControls = ({project}: {project: Project}) => {
       });
 
       if (response.status === 200) {
-        toast.success(`Canvas resized to ${newWidth} x ${newHeight} and auto-saved!`);
+        toast.success(`Canvas is Auto Saved!`);
       } else {
         toast.error("Canvas resized but failed to auto-save. Please save manually.");
       }
@@ -226,11 +323,17 @@ const ResizeControls = ({project}: {project: Project}) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-700/30 rounded-lg p-3">
-        <h4 className="text-sm font-medium text-white mb-2">Current Size</h4>
-        <div className="text-xs text-white/70">
-          {project.width} x {project.height} pixels
+      <div className="flex justify-between bg-slate-700/30 rounded-lg p-3">
+        <div>
+          <h4 className="text-sm font-medium text-white mb-2">Current Size</h4>
+          <div className="text-xs text-white/70">
+            {project.width} x {project.height} pixels
+          </div>
         </div>
+        <Button variant={"ghost"} size={"sm"} onClick={handleResizeReset}  className='text-white/70 hover:text-white'>
+            <RotateCcw className='h-4 w-4 mr-2' />
+            Reset
+        </Button>
       </div>
 
       <div className="space-y-4">
