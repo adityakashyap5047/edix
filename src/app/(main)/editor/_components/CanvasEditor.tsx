@@ -19,7 +19,7 @@ const CanvasEditor = ({project}: {project: Project}) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
-    const { canvasEditor, setCanvasEditor, activeTool } = useCanvas();
+    const { canvasEditor, setCanvasEditor, activeTool, onToolChange } = useCanvas();
 
     const canvasScale = 100;
 
@@ -497,6 +497,26 @@ const CanvasEditor = ({project}: {project: Project}) => {
                 canvasEditor.hoverCursor = "move";
         }
     }, [activeTool, canvasEditor, containerRef]);
+
+    useEffect(() => {
+        if (!canvasEditor || !onToolChange) return;
+        
+        const handleSelection = (e) => {
+            const selectedObject = e.selected?.[0]; // Get 1st selected object
+
+            if (selectedObject && selectedObject.type === "i-text") {
+                onToolChange("text");
+            }
+        }
+
+        canvasEditor.on("selection:created", handleSelection);
+        canvasEditor.on("selection:updated", handleSelection);
+
+        return () => {
+            canvasEditor.off("selection:created", handleSelection);
+            canvasEditor.off("selection:updated", handleSelection);
+        }
+    }, [canvasEditor, onToolChange]);
 
     return (
         <div 
