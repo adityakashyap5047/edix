@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
         hostname: "ik.imagekit.io",
         pathname: "/adityakashyap5047/vividly/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
   },
 };
