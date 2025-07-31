@@ -23,6 +23,7 @@ const AiBackground = ({project}: {project: Project}) => {
   const [unsplashImages, setUnsplashImages] = useState<[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedImageId, setSelectedImageId] = useState(null);
+  const [aiPrompt, setAiPrompt] = useState("");
 
   const getMainImage = () => {
     if (!canvasEditor) return null;
@@ -77,6 +78,54 @@ const AiBackground = ({project}: {project: Project}) => {
       setProcessingMessage(null);
     }
   };
+
+  const handleGenerateBackground = async (e) => {
+    if (e.key !== "Enter" || !aiPrompt.trim()) return;
+    const mainImage = getMainImage();
+
+    if (!mainImage || !project || !canvasEditor) return;
+
+    setProcessingMessage("Removing background with AI...")
+    try {
+      const currentImageUrl = project.currentImageUrl || project.originalImageUrl;
+
+      const aiGeneratedUrl = currentImageUrl?.includes("ik.imagekit.io") ? `${currentImageUrl.split("?")[0]}?tr=e-changebg-prompt-${aiPrompt}` : currentImageUrl;
+      const processedImage = await FabricImage.fromURL(aiGeneratedUrl!, {
+        crossOrigin: "anonymous",
+      });
+
+      const currentProps = {
+        left: mainImage.left,
+        top: mainImage.top,
+        scaleX: mainImage.scaleX,
+        scaleY: mainImage.scaleY,
+        angle: mainImage.angle,
+        originX: mainImage.originX,
+        originY: mainImage.originY,
+      };
+
+      // Remove the old image and add the new one
+      canvasEditor.remove(mainImage);
+      processedImage.set(currentProps);
+      canvasEditor.add(processedImage);
+
+      // IMPORTANT: Update coordinates after replacing the image
+      processedImage.setCoords();
+
+      // Set as active object and recalculate canvas offset
+      canvasEditor.setActiveObject(processedImage);
+      canvasEditor.calcOffset();
+      canvasEditor.requestRenderAll();
+
+      toast.success("Background Generated successfully!");
+      setAiPrompt("");
+    } catch (error) {
+      console.error("Error generating background:", error);
+      toast.error("Failed to generate background. Please try again.");
+    } finally {
+      setProcessingMessage(null);
+    }
+  }
 
   const handleColorBackground = () => {
     if (!canvasEditor) return;
@@ -201,6 +250,14 @@ const AiBackground = ({project}: {project: Project}) => {
             Please add an image to the canvas first to remove its background.
           </p>
         )}
+
+        <Input
+          value={aiPrompt}
+          onChange={(e) => setAiPrompt(e.target.value)}
+          placeholder="Generate background... - Snow Hills, Beach ..."
+          onKeyDown={handleGenerateBackground}
+          className="flex-1 bg-slate-700 my-4 border-white/20 text-white"
+        />
       </div>
 
       <Tabs defaultValue="color" className="w-full">
