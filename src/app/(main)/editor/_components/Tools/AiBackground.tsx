@@ -14,15 +14,28 @@ import Image from "next/image";
 const UNSPLASH_ACCESS_KEY = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY!;
 const UNSPLASH_API_URL= "https://api.unsplash.com";
 
+// Add interface for Unsplash image type
+interface UnsplashImage {
+  id: string;
+  urls: {
+    small: string;
+    regular: string;
+  };
+  alt_description?: string;
+  user: {
+    name: string;
+  };
+}
+
 const AiBackground = ({project}: {project: Project}) => {
 
   const { canvasEditor, processingMessage, setProcessingMessage } = useCanvas();
 
   const [backgroundColor, setBackgroundColor] = useState("#ffffff");
   const [searchQuery, setSearchQuery] = useState("");
-  const [unsplashImages, setUnsplashImages] = useState<[]>([]);
+  const [unsplashImages, setUnsplashImages] = useState<UnsplashImage[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedImageId, setSelectedImageId] = useState(null);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState("");
 
   const getMainImage = () => {
@@ -79,17 +92,17 @@ const AiBackground = ({project}: {project: Project}) => {
     }
   };
 
-  const handleGenerateBackground = async (e) => {
+  const handleGenerateBackground = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter" || !aiPrompt.trim()) return;
     const mainImage = getMainImage();
 
     if (!mainImage || !project || !canvasEditor) return;
 
-    setProcessingMessage("Removing background with AI...")
+    setProcessingMessage("Generating background with AI...")
     try {
       const currentImageUrl = project.currentImageUrl || project.originalImageUrl;
 
-      const aiGeneratedUrl = currentImageUrl?.includes("ik.imagekit.io") ? `${currentImageUrl.split("?")[0]}?tr=e-changebg-prompt-${aiPrompt}` : currentImageUrl;
+      const aiGeneratedUrl = currentImageUrl?.includes("ik.imagekit.io") ? `${currentImageUrl.split("?")[0]}?tr=e-changebg-prompt-${encodeURIComponent(aiPrompt)}` : currentImageUrl;
       const processedImage = await FabricImage.fromURL(aiGeneratedUrl!, {
         crossOrigin: "anonymous",
       });
@@ -127,16 +140,17 @@ const AiBackground = ({project}: {project: Project}) => {
     }
   }
 
-  const handleColorBackground = () => {
+  const handleColorBackground = async () => {
     if (!canvasEditor) return;
 
-    canvasEditor.backgroundImage = null;
+    const fabricImage = await FabricImage.fromURL("");
+    canvasEditor.backgroundImage = fabricImage;
     canvasEditor.backgroundColor = backgroundColor;
     canvasEditor.requestRenderAll();
   };
 
   const searchUnsplashImages = async () => {
-    if (!searchQuery.trim || !UNSPLASH_ACCESS_KEY) return;
+    if (!searchQuery.trim() || !UNSPLASH_ACCESS_KEY) return;
     
     setIsSearching(true);
 
@@ -151,7 +165,7 @@ const AiBackground = ({project}: {project: Project}) => {
         setUnsplashImages(response.data.results);
       } else {
         setUnsplashImages([]);
-        toast.error("An Error Occured while fetching the images.")
+        toast.error("An Error Occurred while fetching the images.")
       }
     } catch (error) {
       console.error("Error searching Unsplash images:", error);
@@ -161,22 +175,23 @@ const AiBackground = ({project}: {project: Project}) => {
     }
   }
 
-  const handleSearchKeyPress = (e) => {
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       searchUnsplashImages();
     }
   }
 
-  const handleRemoveCanvasBackground = () => {
+  const handleRemoveCanvasBackground = async () => {
     if (!canvasEditor) return;
 
-    canvasEditor.backgroundColor = null;
-    canvasEditor.backgroundImage = null;
+    const fabricImage = await FabricImage.fromURL("");
+    canvasEditor.backgroundColor = "";
+    canvasEditor.backgroundImage = fabricImage;
     canvasEditor.requestRenderAll();
     toast.success("Canvas background cleared successfully!");
   }
 
-  const handleImageBackground = async (imageUrl, imageId) => {
+  const handleImageBackground = async (imageUrl: string, imageId: string) => {
     if (!canvasEditor || !project) return;
 
     setSelectedImageId(imageId);
@@ -198,8 +213,8 @@ const AiBackground = ({project}: {project: Project}) => {
       const canvasWidth = canvasEditor.getWidth();
       const canvasHeight = canvasEditor.getHeight();
 
-      const scaleX = canvasWidth / fabricImage.width;
-      const scaleY = canvasHeight / fabricImage.height;
+      const scaleX = canvasWidth / (fabricImage.width || 1);
+      const scaleY = canvasHeight / (fabricImage.height || 1);
 
       const scale = Math.max(scaleX, scaleY);
 
@@ -215,6 +230,7 @@ const AiBackground = ({project}: {project: Project}) => {
       canvasEditor.backgroundImage = fabricImage;
       canvasEditor.requestRenderAll();
       setSelectedImageId(null);
+      toast.success("Background image applied successfully!");
     } catch (error) {
       console.error("Error applying background image:", error);
       toast.error("Failed to apply background image. Please try again.");
@@ -342,7 +358,7 @@ const AiBackground = ({project}: {project: Project}) => {
               <h4 className="text-sm font-medium text-white">Search Results ({unsplashImages.length})</h4>
 
               <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto" style={{ scrollbarWidth: "none"}}>
-                {unsplashImages.map((image) => {
+                {unsplashImages.map((image: UnsplashImage) => {
                   return (<div key={image.id} onClick={() => handleImageBackground(image.urls.regular, image.id)} className="relative group cursor-pointer rounded-sm overflow-hidden border border-white/10 hover:border-cyan-400 transition-colors">
                     <Image
                       src={image.urls.small}
@@ -376,7 +392,7 @@ const AiBackground = ({project}: {project: Project}) => {
             <div className="text-center py-8">
               <ImageIcon className="h-12 w-12 text-white/30 mx-auto mb-3" />
               <p className="text-white/70 text-sm">
-                No images found for "{searchQuery}"
+                No images found for {`"${searchQuery}"`}
               </p>
               <p className="text-white/50 text-xs">
                 Try a different search term
@@ -396,19 +412,17 @@ const AiBackground = ({project}: {project: Project}) => {
         </TabsContent>
       </Tabs>
 
-      {/* <div className="mb-12"> */}
-        <div className="pt-4 mb-12 border-t border-white/10 w-full">
-          <Button
-            onClick={handleRemoveCanvasBackground}
-            className="w-full"
-            variant="outline"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear Canvas Background
-          </Button>
-        </div>
-        <hr />
-      {/* </div> */}
+      <div className="pt-4 mb-12 border-t border-white/10 w-full">
+        <Button
+          onClick={handleRemoveCanvasBackground}
+          className="w-full"
+          variant="outline"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Clear Canvas Background
+        </Button>
+      </div>
+      <hr />
     </div>
   )
 }
