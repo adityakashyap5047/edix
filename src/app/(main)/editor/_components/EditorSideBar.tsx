@@ -6,6 +6,7 @@ import ResizeControls from './Tools/ResizeControls';
 import AdjustControls from './Tools/AdjustControls';
 import AiBackground from './Tools/AiBackground';
 import TextControls from './Tools/TextControls';
+import AiExtends from './Tools/AiExtends';
 
 type ToolConfig = {
   title: string;
@@ -95,7 +96,7 @@ function renderToolContent(activeTool: ToolId, project: Project) {
     case 'background':
       return <AiBackground project={project} />;
     case 'ai_extender':
-      return <div>AI Extender Tool Content</div>;
+      return <AiExtends project={project} />;
     case 'text':
       return <TextControls project={project} />;
     case 'ai_edit':
