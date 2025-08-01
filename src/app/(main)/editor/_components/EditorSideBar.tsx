@@ -7,6 +7,7 @@ import AdjustControls from './Tools/AdjustControls';
 import AiBackground from './Tools/AiBackground';
 import TextControls from './Tools/TextControls';
 import AiExtends from './Tools/AiExtends';
+import AiEdit from './Tools/AiEdit';
 
 type ToolConfig = {
   title: string;
@@ -100,7 +101,7 @@ function renderToolContent(activeTool: ToolId, project: Project) {
     case 'text':
       return <TextControls project={project} />;
     case 'ai_edit':
-      return <div>AI Edit Tool Content</div>;
+      return <AiEdit project={project} />;
     default:
       return null;
   }

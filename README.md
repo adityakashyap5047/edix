@@ -22,7 +22,6 @@ Vividly is a sleek, Next.js-powered image editing app built for creators, develo
 - **[Tailwind CSS](https://tailwindcss.com/)** – Utility-first CSS for sleek styling
 - **[Fabric.js](http://fabricjs.com/)** / **[Konva.js](https://konvajs.org/)** – Canvas-based image manipulation
 - **[TypeScript](https://www.typescriptlang.org/)** – Typed JavaScript for better development experience
-- **[Cloudinary](https://cloudinary.com/)** *(optional)* – Cloud image storage and transformation
 
 ---
 
