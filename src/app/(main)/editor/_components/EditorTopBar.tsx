@@ -1,13 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import UpgradeModal from "@/components/UpgradeModal";
 import { useCanvas } from "@/context/Context";
 import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { Project, ToolId, PremiumTool } from "@/types"
-import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Sliders, Text, Lock, RotateCcw, RotateCw } from "lucide-react";
+import axios from "axios";
+import { FabricImage } from "fabric";
+import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Sliders, Text, Lock, RotateCcw, RotateCw, Loader2, RefreshCcw, Save, Download, ChevronDown, FileImage } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const TOOLS  = [
   {
@@ -51,13 +55,41 @@ const TOOLS  = [
   },
 ];
 
+const EXPORT_FORMATS = [
+  {
+    format: "PNG",
+    quality: 1.0,
+    label: "PNG (High Quality)",
+    extension: "png",
+  },
+  {
+    format: "JPEG",
+    quality: 0.9,
+    label: "JPEG (90% Quality)",
+    extension: "jpg",
+  },
+  {
+    format: "JPEG",
+    quality: 0.8,
+    label: "JPEG (80% Quality)",
+    extension: "jpg",
+  },
+  {
+    format: "WEBP",
+    quality: 0.9,
+    label: "WebP (90% Quality)",
+    extension: "webp",
+  },
+];
+
 const EditorTopBar = ({project}: {project: Project}) => {
 
     const router = useRouter();
     const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
     const [restrictedTool, setRestrictedTool] = useState<ToolId | null>(null);
+    const [isSaving, setIsSaving] = useState<boolean>(false);
 
-    const { activeTool, onToolChange } = useCanvas();
+    const { activeTool, onToolChange, canvasEditor } = useCanvas();
     const { hasAccess } = usePlanAccess();
 
     const handleBackToDashboard = () => {
@@ -74,6 +106,104 @@ const EditorTopBar = ({project}: {project: Project}) => {
         onToolChange(toolId);
     };
 
+    
+    const handleResetToOriginal = async () => {
+    if (!canvasEditor || !project || !project.originalImageUrl) {
+        toast.error("No original image found to reset to");
+        return;
+    }
+
+        setIsSaving(true);
+        try {
+            const canvasElement = canvasEditor.getElement();
+            const container = canvasElement.closest('.bg-secondary');
+            
+            if (!container) {
+                toast.error("Could not find container for reset");
+                return;
+            }
+
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const margin = 40; // Leave some margin
+            
+            const availableWidth = containerWidth - margin;
+            const availableHeight = containerHeight - margin;
+
+            // Clear canvas and set new dimensions
+            canvasEditor.clear();
+            canvasEditor.backgroundColor = "#f3f4f6"; // Set gray background
+
+            // Set canvas to fill available area
+            canvasEditor.setWidth(availableWidth);
+            canvasEditor.setHeight(availableHeight);
+
+            // Load the original image
+            const fabricImage = await FabricImage.fromURL(project.originalImageUrl, {
+                crossOrigin: "anonymous",
+            });
+
+            // Calculate scale to fit image optimally in the new canvas
+            const imgAspectRatio = (fabricImage.width || 1) / (fabricImage.height || 1);
+            const canvasAspectRatio = availableWidth / availableHeight;
+            
+            // Scale to fit within canvas while maintaining aspect ratio
+            const scale = imgAspectRatio > canvasAspectRatio
+                ? (availableWidth * 0.9) / (fabricImage.width || 1)  // 90% of canvas width
+                : (availableHeight * 0.9) / (fabricImage.height || 1); // 90% of canvas height
+
+            // Set image properties
+            fabricImage.set({
+                left: availableWidth / 2,
+                top: availableHeight / 2,
+                originX: "center",
+                originY: "center",
+                scaleX: scale,
+                scaleY: scale,
+                selectable: true,
+                evented: true,
+            });
+
+            // Clear any filters and add to canvas
+            fabricImage.filters = [];
+            canvasEditor.add(fabricImage);
+            canvasEditor.centerObject(fabricImage);
+            canvasEditor.setActiveObject(fabricImage);
+
+            // Set canvas display dimensions and zoom
+            canvasEditor.setDimensions({
+                width: availableWidth,
+                height: availableHeight,
+            }, { backstoreOnly: false });
+            
+            canvasEditor.setZoom(1);
+            canvasEditor.calcOffset();
+            canvasEditor.requestRenderAll();
+
+            // Save the updated state
+            const canvasJSON = canvasEditor.toJSON();
+            await axios.post(`/api/projects/${project.id}`, {
+                width: availableWidth,
+                height: availableHeight,
+                canvasState: canvasJSON,
+                currentImageUrl: project.originalImageUrl,
+                activeTransformations: undefined,
+                backgroundRemoved: false,
+            });
+
+            // Update project dimensions
+            project.width = availableWidth;
+            project.height = availableHeight;
+
+            toast.success("Canvas reset to original image and resized to fill available area");
+        } catch (error) {
+            console.error("Error resetting canvas:", error);
+            toast.error("Failed to reset canvas. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
   return (
     <>
         <div className="border-b px-6 py-3">
@@ -85,8 +215,116 @@ const EditorTopBar = ({project}: {project: Project}) => {
 
                 <h1 className="font-extrabold uppercase">{project.title}</h1>
 
-                <div>Right Actions</div>
-            </div>
+                <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetToOriginal}
+              disabled={isSaving || !project.originalImageUrl}
+              className="gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Resetting...
+                </>
+              ) : (
+                <>
+                  <RefreshCcw className="h-4 w-4" />
+                  Reset
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="primary"
+              size="sm"
+            //   onClick={handleManualSave}
+            //   disabled={isSaving || !canvasEditor}
+              className="gap-2"
+            >
+              {/* {isSaving ? ( */}
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              {/* ) : ( */}
+                <>
+                  <Save className="h-4 w-4" />
+                  Save
+                </>
+              {/* )} */}
+            </Button>
+
+            {/* Export Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="glass"
+                  size="sm"
+                //   disabled={isExporting || !canvasEditor}
+                  className="gap-2"
+                >
+                  {/* {isExporting ? ( */}
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {/* Exporting {exportFormat}... */}
+                    </>
+                  {/* ) : ( */}
+                    <>
+                      <Download className="h-4 w-4" />
+                      Export
+                      <ChevronDown className="h-4 w-4" />
+                    </>
+                  {/* )} */}
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="end"
+                className="w-56 bg-slate-800 border-slate-700"
+              >
+                <div className="px-3 py-2 text-sm text-white/70">
+                  Export Resolution: {project.width} × {project.height}px
+                </div>
+
+                <DropdownMenuSeparator className="bg-slate-700" />
+
+                {EXPORT_FORMATS.map((config, index) => (
+                  <DropdownMenuItem
+                    key={index}
+                    // onClick={() => handleExport(config)}
+                    className="text-white hover:bg-slate-700 cursor-pointer flex items-center gap-2"
+                  >
+                    <FileImage className="h-4 w-4" />
+                    <div className="flex-1">
+                      <div className="font-medium">{config.label}</div>
+                      <div className="text-xs text-white/50">
+                        {config.format} • {Math.round(config.quality * 100)}%
+                        quality
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+
+                <DropdownMenuSeparator className="bg-slate-700" />
+
+                {/* Export Limit Info for Free Users */}
+                {/* {isFree && ( */}
+                  <div className="px-3 py-2 text-xs text-white/50">
+                    {/* Free Plan: {user?.exportsThisMonth || 0}/20 exports this */}
+                    month
+                    {/* {(user?.exportsThisMonth || 0) >= 20 && ( */}
+                      <div className="text-amber-400 mt-1">
+                        Upgrade to Pro for unlimited exports
+                      </div>
+                    {/* )} */}
+                  </div>
+                {/* )} */}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     {TOOLS.map((tool) => {
