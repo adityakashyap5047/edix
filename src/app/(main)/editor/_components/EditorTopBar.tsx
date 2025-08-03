@@ -87,6 +87,7 @@ const EditorTopBar = ({project}: {project: Project}) => {
     const router = useRouter();
     const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
     const [restrictedTool, setRestrictedTool] = useState<ToolId | null>(null);
+    const [isReseting, setIsReseting] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
 
     const { activeTool, onToolChange, canvasEditor } = useCanvas();
@@ -106,14 +107,14 @@ const EditorTopBar = ({project}: {project: Project}) => {
         onToolChange(toolId);
     };
 
-    
-    const handleResetToOriginal = async () => {
-    if (!canvasEditor || !project || !project.originalImageUrl) {
-        toast.error("No original image found to reset to");
-        return;
-    }
 
-        setIsSaving(true);
+    const handleResetToOriginal = async () => {
+        if (!canvasEditor || !project || !project.originalImageUrl) {
+            toast.error("No original image found to reset to");
+            return;
+        }
+
+        setIsReseting(true);
         try {
             const canvasElement = canvasEditor.getElement();
             const container = canvasElement.closest('.bg-secondary');
@@ -200,9 +201,31 @@ const EditorTopBar = ({project}: {project: Project}) => {
             console.error("Error resetting canvas:", error);
             toast.error("Failed to reset canvas. Please try again.");
         } finally {
-            setIsSaving(false);
+            setIsReseting(false);
         }
     };
+
+    const handleManualSave = async () => {
+        if (!canvasEditor) return;
+        setIsSaving(true);
+        try {
+            const canvasJSON = canvasEditor.toJSON();
+            await axios.post(`/api/projects/${project.id}`, {
+                width: project.width,
+                height: project.height,
+                canvasState: canvasJSON,
+                currentImageUrl: project.originalImageUrl,
+                activeTransformations: undefined,
+                backgroundRemoved: false,
+            });
+            toast.success("Canvas saved successfully");
+        } catch (error) {
+            console.error("Error saving canvas:", error);
+            toast.error("Failed to save canvas. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    }
 
   return (
     <>
@@ -216,115 +239,115 @@ const EditorTopBar = ({project}: {project: Project}) => {
                 <h1 className="font-extrabold uppercase">{project.title}</h1>
 
                 <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetToOriginal}
-              disabled={isSaving || !project.originalImageUrl}
-              className="gap-2"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Resetting...
-                </>
-              ) : (
-                <>
-                  <RefreshCcw className="h-4 w-4" />
-                  Reset
-                </>
-              )}
-            </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetToOriginal}
+                        disabled={isReseting || !project.originalImageUrl}
+                        className="gap-2"
+                    >
+                        {isReseting ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Resetting...
+                            </>
+                        ) : (
+                            <>
+                                <RefreshCcw className="h-4 w-4" />
+                                Reset
+                            </>
+                        )}
+                    </Button>
 
-            <Button
-              variant="primary"
-              size="sm"
-            //   onClick={handleManualSave}
-            //   disabled={isSaving || !canvasEditor}
-              className="gap-2"
-            >
-              {/* {isSaving ? ( */}
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              {/* ) : ( */}
-                <>
-                  <Save className="h-4 w-4" />
-                  Save
-                </>
-              {/* )} */}
-            </Button>
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleManualSave}
+                        disabled={isSaving || !canvasEditor}
+                        className="gap-2"
+                    >
+                        {isSaving ? (
+                            <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Saving...
+                            </>
+                        ) : ( 
+                            <>
+                            <Save className="h-4 w-4" />
+                            Save
+                            </>
+                        )} 
+                    </Button>
 
-            {/* Export Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="glass"
-                  size="sm"
-                //   disabled={isExporting || !canvasEditor}
-                  className="gap-2"
-                >
-                  {/* {isExporting ? ( */}
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {/* Exporting {exportFormat}... */}
-                    </>
-                  {/* ) : ( */}
-                    <>
-                      <Download className="h-4 w-4" />
-                      Export
-                      <ChevronDown className="h-4 w-4" />
-                    </>
-                  {/* )} */}
-                </Button>
-              </DropdownMenuTrigger>
+                    {/* Export Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                            variant="glass"
+                            size="sm"
+                            //   disabled={isExporting || !canvasEditor}
+                            className="gap-2"
+                            >
+                            {/* {isExporting ? ( */}
+                                <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                {/* Exporting {exportFormat}... */}
+                                </>
+                            {/* ) : ( */}
+                                <>
+                                <Download className="h-4 w-4" />
+                                Export
+                                <ChevronDown className="h-4 w-4" />
+                                </>
+                            {/* )} */}
+                            </Button>
+                        </DropdownMenuTrigger>
 
-              <DropdownMenuContent
-                align="end"
-                className="w-56 bg-slate-800 border-slate-700"
-              >
-                <div className="px-3 py-2 text-sm text-white/70">
-                  Export Resolution: {project.width} × {project.height}px
+                        <DropdownMenuContent
+                            align="end"
+                            className="w-56 bg-slate-800 border-slate-700"
+                        >
+                            <div className="px-3 py-2 text-sm text-white/70">
+                            Export Resolution: {project.width} × {project.height}px
+                            </div>
+
+                            <DropdownMenuSeparator className="bg-slate-700" />
+
+                            {EXPORT_FORMATS.map((config, index) => (
+                            <DropdownMenuItem
+                                key={index}
+                                // onClick={() => handleExport(config)}
+                                className="text-white hover:bg-slate-700 cursor-pointer flex items-center gap-2"
+                            >
+                                <FileImage className="h-4 w-4" />
+                                <div className="flex-1">
+                                <div className="font-medium">{config.label}</div>
+                                <div className="text-xs text-white/50">
+                                    {config.format} • {Math.round(config.quality * 100)}%
+                                    quality
+                                </div>
+                                </div>
+                            </DropdownMenuItem>
+                            ))}
+
+                            <DropdownMenuSeparator className="bg-slate-700" />
+
+                            {/* Export Limit Info for Free Users */}
+                            {/* {isFree && ( */}
+                            <div className="px-3 py-2 text-xs text-white/50">
+                                {/* Free Plan: {user?.exportsThisMonth || 0}/20 exports this */}
+                                month
+                                {/* {(user?.exportsThisMonth || 0) >= 20 && ( */}
+                                <div className="text-amber-400 mt-1">
+                                    Upgrade to Pro for unlimited exports
+                                </div>
+                                {/* )} */}
+                            </div>
+                            {/* )} */}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
-
-                <DropdownMenuSeparator className="bg-slate-700" />
-
-                {EXPORT_FORMATS.map((config, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    // onClick={() => handleExport(config)}
-                    className="text-white hover:bg-slate-700 cursor-pointer flex items-center gap-2"
-                  >
-                    <FileImage className="h-4 w-4" />
-                    <div className="flex-1">
-                      <div className="font-medium">{config.label}</div>
-                      <div className="text-xs text-white/50">
-                        {config.format} • {Math.round(config.quality * 100)}%
-                        quality
-                      </div>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-
-                <DropdownMenuSeparator className="bg-slate-700" />
-
-                {/* Export Limit Info for Free Users */}
-                {/* {isFree && ( */}
-                  <div className="px-3 py-2 text-xs text-white/50">
-                    {/* Free Plan: {user?.exportsThisMonth || 0}/20 exports this */}
-                    month
-                    {/* {(user?.exportsThisMonth || 0) >= 20 && ( */}
-                      <div className="text-amber-400 mt-1">
-                        Upgrade to Pro for unlimited exports
-                      </div>
-                    {/* )} */}
-                  </div>
-                {/* )} */}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+            </div>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     {TOOLS.map((tool) => {
