@@ -5,12 +5,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import UpgradeModal from "@/components/UpgradeModal";
 import { useCanvas } from "@/context/Context";
 import { usePlanAccess } from "@/hooks/usePlanAccess";
-import { Project, ToolId, PremiumTool } from "@/types"
+import { Project, ToolId, PremiumTool, User } from "@/types"
 import axios from "axios";
-import { FabricImage } from "fabric";
+import { FabricImage, ImageFormat, TMat2D } from "fabric";
 import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Sliders, Text, Lock, RotateCcw, RotateCw, Loader2, RefreshCcw, Save, Download, ChevronDown, FileImage } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const TOOLS  = [
@@ -85,13 +85,28 @@ const EXPORT_FORMATS = [
 const EditorTopBar = ({project}: {project: Project}) => {
 
     const router = useRouter();
+    const [user, setUser] = useState<User | null>(null);
     const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
     const [restrictedTool, setRestrictedTool] = useState<ToolId | null>(null);
     const [isReseting, setIsReseting] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [isExporting, setIsExporting] = useState<boolean>(false);
+    const [exportFormat, setExportFormat] = useState<string | null>(null);
 
     const { activeTool, onToolChange, canvasEditor } = useCanvas();
-    const { hasAccess } = usePlanAccess();
+    const { hasAccess, canExport, isFree } = usePlanAccess();
+
+    useEffect(() => {
+        const getUser = async() => {
+            try {
+                const response = await axios.get("/api/users");
+                if(response.status === 200 ) setUser(response.data);
+            } catch (error) {
+                console.error("Error Getting User:", error);
+            }
+        }
+        getUser();
+    }, []);
 
     const handleBackToDashboard = () => {
         router.push("/dashboard");
@@ -227,6 +242,69 @@ const EditorTopBar = ({project}: {project: Project}) => {
         }
     }
 
+    const handleExport = (exportConfig: { format: string; quality: number; label: string; extension: string; }) => {
+        if (!canvasEditor || !project) {
+            toast.error("Canvas not ready for export");
+            return;
+        }
+
+        if(!canExport(user?.exportsThisMonth || 0)) {
+            setRestrictedTool("export");
+            setShowUpgradeModal(true);
+            return;
+        }
+
+        setIsExporting(true);
+        setExportFormat(exportConfig.format);
+
+        try {
+            // Store current canvas state for restoration
+            const currentZoom = canvasEditor.getZoom();
+            const currentViewportTransform = [...canvasEditor.viewportTransform];
+
+            // Reset zoom and viewport for accurate export
+            canvasEditor.setZoom(1);
+            canvasEditor.setViewportTransform([1, 0, 0, 1, 0, 0]);
+            canvasEditor.setDimensions({
+                width: project.width,
+                height: project.height,
+            });
+            canvasEditor.requestRenderAll();
+
+            // Export the canvas
+            const dataURL = canvasEditor.toDataURL({
+                format: exportConfig.format.toLowerCase() as ImageFormat,
+                quality: exportConfig.quality,
+                multiplier: 1,
+            });
+
+            // Restore original canvas state
+            canvasEditor.setZoom(currentZoom);
+            canvasEditor.setViewportTransform(currentViewportTransform as TMat2D);
+            canvasEditor.setDimensions({
+                width: project.width * currentZoom,
+                height: project.height * currentZoom,
+            });
+            canvasEditor.requestRenderAll();
+
+            // Download the image
+            const link = document.createElement("a");
+            link.download = `${project.title}.${exportConfig.extension}`;
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            toast.success(`Image exported as ${exportConfig.format}!`);
+        } catch (error) {
+            console.error("Error exporting image:", error);
+            toast.error("Failed to export image. Please try again.");
+        } finally {
+            setIsExporting(false);
+            setExportFormat(null);
+        }
+    };
+
   return (
     <>
         <div className="border-b px-6 py-3">
@@ -284,21 +362,21 @@ const EditorTopBar = ({project}: {project: Project}) => {
                             <Button
                             variant="glass"
                             size="sm"
-                            //   disabled={isExporting || !canvasEditor}
+                            disabled={isExporting || !canvasEditor}
                             className="gap-2"
                             >
-                            {/* {isExporting ? ( */}
+                            {isExporting ? (
                                 <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                {/* Exporting {exportFormat}... */}
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Exporting {exportFormat}...
                                 </>
-                            {/* ) : ( */}
+                            ) : (
                                 <>
-                                <Download className="h-4 w-4" />
-                                Export
-                                <ChevronDown className="h-4 w-4" />
+                                    <Download className="h-4 w-4" />
+                                    Export
+                                    <ChevronDown className="h-4 w-4" />
                                 </>
-                            {/* )} */}
+                            )}
                             </Button>
                         </DropdownMenuTrigger>
 
@@ -307,7 +385,7 @@ const EditorTopBar = ({project}: {project: Project}) => {
                             className="w-56 bg-slate-800 border-slate-700"
                         >
                             <div className="px-3 py-2 text-sm text-white/70">
-                            Export Resolution: {project.width} × {project.height}px
+                                Export Resolution: {project.width} × {project.height}px
                             </div>
 
                             <DropdownMenuSeparator className="bg-slate-700" />
@@ -315,7 +393,7 @@ const EditorTopBar = ({project}: {project: Project}) => {
                             {EXPORT_FORMATS.map((config, index) => (
                             <DropdownMenuItem
                                 key={index}
-                                // onClick={() => handleExport(config)}
+                                onClick={() => handleExport(config)}
                                 className="text-white hover:bg-slate-700 cursor-pointer flex items-center gap-2"
                             >
                                 <FileImage className="h-4 w-4" />
@@ -331,18 +409,14 @@ const EditorTopBar = ({project}: {project: Project}) => {
 
                             <DropdownMenuSeparator className="bg-slate-700" />
 
-                            {/* Export Limit Info for Free Users */}
-                            {/* {isFree && ( */}
-                            <div className="px-3 py-2 text-xs text-white/50">
-                                {/* Free Plan: {user?.exportsThisMonth || 0}/20 exports this */}
-                                month
-                                {/* {(user?.exportsThisMonth || 0) >= 20 && ( */}
-                                <div className="text-amber-400 mt-1">
-                                    Upgrade to Pro for unlimited exports
+                            {isFree && (
+                                <div className="px-3 py-2 text-xs text-white/50">
+                                    Free Plan: {user?.exportsThisMonth || 0}/20 exports this month
+                                    <div className="text-amber-400 mt-1">
+                                        Upgrade to Pro for unlimited exports
+                                    </div>
                                 </div>
-                                {/* )} */}
-                            </div>
-                            {/* )} */}
+                            )} 
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
