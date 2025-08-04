@@ -279,7 +279,6 @@ const EditorTopBar = ({project}: {project: Project}) => {
                         )} 
                     </Button>
 
-                    {/* Export Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
