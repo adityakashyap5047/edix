@@ -50,3 +50,42 @@ export async function POST(){
         );
     }
 }
+
+export async function GET(){
+    try {
+        const user = await currentUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { error: "User not authenticated." },
+                { status: 401 }
+            );
+        }
+
+        const existingUser = await db?.user.findUnique({
+            where: {
+                clerkUserId: user?.id
+            },
+        });
+
+        if (existingUser) {
+            return NextResponse.json(existingUser, {
+                status: 200
+            });
+        }
+
+        return NextResponse.json(
+            { error: "User not Found." },
+            { status: 404 }
+        );
+    } catch (error: unknown) {
+        return NextResponse.json(
+            {
+                error: (error as Error).message || "Unknown error occurred while getting user."
+            },
+            {
+                status: 500
+            }
+        );
+    }
+}
