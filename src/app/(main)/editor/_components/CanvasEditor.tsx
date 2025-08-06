@@ -500,9 +500,9 @@ const CanvasEditor = ({project}: {project: Project}) => {
 
     useEffect(() => {
         if (!canvasEditor || !onToolChange) return;
-        
-        const handleSelection = (e) => {
-            const selectedObject = e.selected?.[0]; // Get 1st selected object
+
+        const handleSelection = (e: { selected?: { type: string }[] }) => {
+            const selectedObject = e.selected?.[0];
 
             if (selectedObject && selectedObject.type === "i-text") {
                 onToolChange("text");
