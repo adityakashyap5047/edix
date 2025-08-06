@@ -27,15 +27,20 @@ const FOCUS_MAP = {
 const AiExtends = ({project}: {project: Project}) => {
 
     const { canvasEditor, setProcessingMessage } = useCanvas();
-    const [selectedDirection, setSelectedDirection] = useState(null);
+    const [selectedDirection, setSelectedDirection] = useState<string | null>(null);
     const [extensionAmount, setExtensionAmount] = useState(200);
 
     const getMainImage = () => canvasEditor?.getObjects().find(obj => obj.type === 'image') || null;
 
-    const getImageSrc = (image) => image?.getSrc?.() || image?._element?.src || image?.src;
+    const getImageSrc = (image: FabricImage) => {
+        if (!image) return undefined;
+        if (typeof image.getSrc === "function") return image.getSrc();
+        if (image._element && image._element instanceof HTMLImageElement) return image._element.src;
+        return undefined;
+    };
 
     const hasBackgroundRemoval = () => {
-        const imageSrc = getImageSrc(getMainImage());
+        const imageSrc = getImageSrc(getMainImage() as FabricImage);
 
         return (
             imageSrc?.includes("e-bgremove") ||
@@ -70,7 +75,7 @@ const AiExtends = ({project}: {project: Project}) => {
             "cm-pad_resize", // Pad resize mode (adds space rather than cropping)
         ]
 
-        const focus = FOCUS_MAP[selectedDirection];
+        const focus = FOCUS_MAP[selectedDirection as keyof typeof FOCUS_MAP];
 
         if (focus) transformations.push(focus);
 
@@ -84,8 +89,8 @@ const AiExtends = ({project}: {project: Project}) => {
         setProcessingMessage("Extending Image with AI...");
 
         try {
-            const currentImageUrl = getImageSrc(mainImage);
-            const extenedImageUrl = buildExtensionUrl(currentImageUrl);
+            const currentImageUrl = getImageSrc(mainImage as FabricImage);
+            const extenedImageUrl = buildExtensionUrl(currentImageUrl as string);
 
             const extendedImage = await FabricImage.fromURL(extenedImageUrl, {
                 crossOrigin: "anonymous",
@@ -211,8 +216,8 @@ const AiExtends = ({project}: {project: Project}) => {
                 <div className="text-xs text-white/70 space-y-1">
                     <div>
                         Current:{" "}
-                        {Math.round(currentImage.width * (currentImage.scaleX || 1))} ×{" "}
-                        {Math.round(currentImage.height * (currentImage.scaleY || 1))}px
+                        {Math.round(currentImage!.width * (currentImage!.scaleX || 1))} ×{" "}
+                        {Math.round(currentImage!.height * (currentImage!.scaleY || 1))}px
                         </div>
                         <div className="text-cyan-400">
                         Extended: {newWidth} × {newHeight}px
