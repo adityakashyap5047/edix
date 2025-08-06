@@ -6,8 +6,8 @@ import { Slider } from '@/components/ui/slider';
 import { useCanvas } from '@/context/Context';
 import { Project } from '@/types'
 import { IText } from 'fabric';
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Divide, Italic, Trash2, Type, Underline } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic, Trash2, Type, Underline } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 const FONT_FAMILIES = [
   "Arial",
@@ -26,31 +26,32 @@ const FONT_SIZES = { min: 8, max: 120, default: 20 };
 const TextControls = ({project}: {project: Project}) => {
 
     const { canvasEditor } = useCanvas();
-    const [selectedText, setSelectedText] = useState(null);
+    const [selectedText, setSelectedText] = useState<IText | null>(null);
     const [fontFamily, setFontFamily] = useState("Arial");
     const [fontSize, setFontSize] = useState(FONT_SIZES.default);
     const [textColor, setTextColor] = useState("#000000");
     const [textAlign, setTextAlign] = useState("left");
     const [, setChanged] = useState(0);
 
-    const updateSelectedText = () => { 
+    const updateSelectedText = useCallback(() => { 
         if (!canvasEditor) return;
 
         const activeObject = canvasEditor.getActiveObject();
 
         if (activeObject && activeObject.type === "i-text") {
-            setSelectedText(activeObject);
-            setFontFamily(activeObject.fontFamily || "Arial");
-            setFontSize(activeObject.fontSize || FONT_SIZES.default);
-            setTextColor(activeObject.fill || "#000000");
-            setTextAlign(activeObject.textAlign || "left");
+            const textObj = activeObject as IText;
+            setSelectedText(textObj);
+            setFontFamily(textObj.fontFamily || "Arial");
+            setFontSize(textObj.fontSize || FONT_SIZES.default);
+            setTextColor(typeof textObj.fill === "string" ? textObj.fill : "#000000");
+            setTextAlign(textObj.textAlign || "left");
         } else {
             setSelectedText(null);
         }
-    }
+    }, [canvasEditor]);
 
     useEffect(() => {
-        if (!canvasEditor) return;
+        if (!canvasEditor || !project) return;
         
         updateSelectedText();
 
@@ -67,7 +68,7 @@ const TextControls = ({project}: {project: Project}) => {
             canvasEditor.off('selection:updated', handleSelectionUpdated);
             canvasEditor.off('selection:cleared', handleSelectionCleared);   
         }
-    }, [canvasEditor]);
+    }, [canvasEditor, updateSelectedText, project]);
 
     if (!canvasEditor) {
         return <div className="p-4">
@@ -227,7 +228,7 @@ const TextControls = ({project}: {project: Project}) => {
                         ].map(([align, Icon], idx) => (
                             <Button
                                 key={idx}
-                                onClick={() => applyTextAlign(align)}
+                                onClick={() => applyTextAlign(align as string)}
                                 variant={textAlign === align ? "default" : "outline"}
                                 size="sm"
                                 className="p-2"
