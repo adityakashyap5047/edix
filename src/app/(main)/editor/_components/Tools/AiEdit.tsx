@@ -71,15 +71,23 @@ const AiEdit = ( {project}: {project: Project} ) => {
         return `${baseUrl}?tr=${preset.transform}`;
     };
 
+    const getImageSrc = (image: FabricImage) => {
+        if (!image) return undefined;
+        if (typeof image.getSrc === "function") return image.getSrc();
+        if (image._element && image._element instanceof HTMLImageElement) return image._element.src;
+        return undefined;
+    };
+
     const applyRetouch = async () => {
-        const mainImage = getMainImage();
+        const mainImage = getMainImage() as FabricImage;
         if (!mainImage || !project || !selectedPresetData || !canvasEditor) return;
+
+        const currentImageUrl = getImageSrc(mainImage);
+        if (!currentImageUrl) return;
 
         setProcessingMessage(`Enhancing image with ${selectedPresetData.label}...`);
 
         try {
-            const currentImageUrl =
-                mainImage.getSrc?.() || mainImage._element?.src || mainImage.src;
             const retouchedUrl = buildRetouchUrl(currentImageUrl, selectedPreset);
 
             const retouchedImage = await FabricImage.fromURL(retouchedUrl, {
