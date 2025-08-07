@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         const response = await imagekit.upload({
             file: buffer,
             fileName: uniqueFileName,
-            folder: "/vividly/projects"
+            folder: "/edix/projects"
         });
 
         const thumbnailUrl = imagekit.url({

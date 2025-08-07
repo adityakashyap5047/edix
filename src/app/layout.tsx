@@ -12,12 +12,12 @@ import Footer from "@/components/Footer";
 const inter = Inter({subsets: ["latin"]});
 
 export const metadata: Metadata = {
-  title: "Vividly",
-  description: "Vividly is a modern, web-based image editing platform, offering a fast and intuitive interface for transforming images with ease.",
+  title: "Edix",
+  description: "Edix is a modern, web-based image editing platform, offering a fast and intuitive interface for transforming images with ease.",
   icons: {
-    icon: "/vividly/vividly.png",
-    shortcut: "/vividly/vividly.png",
-    apple: "/vividly/vividly.png",
+    icon: "/edix/edix.png",
+    shortcut: "/edix/edix.png",
+    apple: "/edix/edix.png",
   }
 };
 

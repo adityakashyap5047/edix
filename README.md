@@ -1,7 +1,7 @@
-# 🎨 Vividly — Web-Based Image Editor
+# 🎨 Edix — Web-Based Image Editor
 
 **Edit. Enhance. Express.**  
-Vividly is a sleek, Next.js-powered image editing app built for creators, developers, and everyday users. Whether you're adjusting brightness, applying filters, or removing backgrounds — Vividly makes image editing fast, intuitive, and powerful — right from your browser.
+Edix is a sleek, Next.js-powered image editing app built for creators, developers, and everyday users. Whether you're adjusting brightness, applying filters, or removing backgrounds — Edix makes image editing fast, intuitive, and powerful — right from your browser.
 
 ---
 
@@ -28,8 +28,8 @@ Vividly is a sleek, Next.js-powered image editing app built for creators, develo
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/adityakashyap5047/vividly.git
-cd vividly
+git clone https://github.com/adityakashyap5047/edix.git
+cd edix
 npm install
 npm run dev
 ```
@@ -45,7 +45,7 @@ Open http://localhost:3000 in your browser to view the app.
 ## 📁 Project Structure
 
 ```
-vividly/
+edix/
 ├── components/         # Reusable UI components (Editor, Toolbar, etc.)
 ├── pages/              # Next.js pages
 ├── public/             # Static assets

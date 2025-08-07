@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "ik.imagekit.io",
-        pathname: "/adityakashyap5047/vividly/**",
+        pathname: "/adityakashyap5047/edix/**",
       },
       {
         protocol: "https",

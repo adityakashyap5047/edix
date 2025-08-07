@@ -170,8 +170,8 @@ const NewProjectModal = ({ isOpen, onClose, projects }: NewProjectModalProps) =>
                         : "Project Limit Reached"}
                     </div>
                     {currentProjectCount === 2
-                        ? "This will be your last free project. Upgrade to Vividly Pro for unlimited projects."
-                        : "Free plan is limited to 3 projects. Upgrade to Vividly Pro to create more projects."}
+                        ? "This will be your last free project. Upgrade to Edix Pro for unlimited projects."
+                        : "Free plan is limited to 3 projects. Upgrade to Edix Pro to create more projects."}
                     </AlertDescription>
                 </Alert>
                 )}

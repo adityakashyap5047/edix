@@ -35,7 +35,7 @@ const Header = () => {
         <header className='fixed top-6 left-1/2 transform -translate-x-1/2 z-50 text-nowrap'>
             <div className='backdrop-blur-md bg-slate-900/10 border border-white/20 rounded-full px-8 py-3 flex items-center justify-between gap-8'>
                 <Link href="/" className='mr-10 md:mr-20'>
-                    <Image src={"/vividly/vividly.png"} alt="Vividly Logo" width={200} height={50} className='h-8 w-8'/>
+                    <Image src={"/edix/edix.png"} alt="Edix Logo" width={200} height={50} className='h-8 w-8'/>
                 </Link>
                 {
                     pathName === '/' && (

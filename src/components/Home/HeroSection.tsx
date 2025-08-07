@@ -22,7 +22,7 @@ const HeroSection = () => {
                 <h1 className="text-3xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight">
                     <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent animate-pulse">Create</span>
                     <span className="text-xl sm:text-4xl md:text-5xl bg-gradient-to-r from-orange-400 via-cyan-500 to-orange-400 bg-clip-text text-transparent"> With </span>
-                    <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent animate-pulse">Vividly</span>
+                    <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent animate-pulse">Edix</span>
                     <br />
                     <span className="text-white">Without Limits</span>
                 </h1>
@@ -37,7 +37,7 @@ const HeroSection = () => {
                         Start Creating
                     </Button>
                 </Link>
-                <Link href={"https://github.com/adityakashyap5047/vividly"} target="_blank">
+                <Link href={"https://github.com/adityakashyap5047/edix"} target="_blank">
                     <Button variant={"glass"} size={"xl"}>
                         ⭐ Star Us
                     </Button>
