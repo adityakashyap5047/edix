@@ -1,9 +1,10 @@
 "use client";
 
 import { useIntersectionObserver } from "@/hooks/useLanding";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import { Button } from "../ui/button";
+import { useRouter } from "next/navigation";
 
 declare global {
   interface Window {
@@ -39,6 +40,8 @@ const PricingCard = ({
   const [ref, isVisible] = useIntersectionObserver<HTMLDivElement>();
   const [isHovered, setIsHovered] = useState(false);
   const { has } = useAuth();
+  const { user } = useUser();
+  const router = useRouter();
 
   const isCurrentPlan = id ? has?.({ plan: id }) : false;
 
@@ -55,6 +58,14 @@ const PricingCard = ({
       }
     } catch (error) {
       console.error("Checkout error:", error);
+    }
+  };
+
+  const handleSignIn = () => {
+    if (user) {
+      handlePopup();
+    } else {
+      router.push("/sign-in");
     }
   };
 
@@ -99,8 +110,8 @@ const PricingCard = ({
           variant={featured ? "primary" : "glass"}
           size="xl"
           className="w-full"
-          onClick={handlePopup}
-          disabled={isCurrentPlan || !planId}
+          onClick={user ? handlePopup : handleSignIn}
+          disabled={user && (isCurrentPlan || !planId) ? true : false}
         >
           {isCurrentPlan ? "Current Plan" : buttonText}
         </Button>
