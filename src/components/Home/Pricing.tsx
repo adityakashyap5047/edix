@@ -6,6 +6,7 @@ const PricingSection = () => {
       id: "free_user",
       plan: "Free",
       price: 0,
+      monthAnnualPrice: 0,
       features: [
         "3 projects maximum",
         "20 exports per month",
@@ -19,6 +20,7 @@ const PricingSection = () => {
       id: "pro",
       plan: "Pro",
       price: 10,
+      monthAnnualPrice: 8.5,
       features: [
         "Unlimited projects",
         "Unlimited exports",

@@ -5,6 +5,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
+import { Switch } from "../ui/switch"; // shadcn/ui switch
 
 declare global {
   interface Window {
@@ -19,13 +20,14 @@ declare global {
 }
 
 interface PricingCardProps {
-    id: string;
-    plan: string;
-    price: number;
-    features: string[];
-    featured?: boolean;
-    planId?: string;
-    buttonText: string;
+  id: string;
+  plan: string;
+  price: number;
+  monthAnnualPrice: number;
+  features: string[];
+  featured?: boolean;
+  planId?: string;
+  buttonText: string;
 }
 
 const PricingCard = ({
@@ -36,23 +38,27 @@ const PricingCard = ({
   featured = false,
   planId,
   buttonText,
+  monthAnnualPrice,
 }: PricingCardProps) => {
   const [ref, isVisible] = useIntersectionObserver<HTMLDivElement>();
   const [isHovered, setIsHovered] = useState(false);
+  const [isYearly, setIsYearly] = useState(false);
   const { has } = useAuth();
   const { user } = useUser();
   const router = useRouter();
 
   const isCurrentPlan = id ? has?.({ plan: id }) : false;
 
+  const yearlyPrice = Math.round(monthAnnualPrice * 12);
+
   const handlePopup = async () => {
     if (isCurrentPlan) return;
 
     try {
-      if (window.Clerk && window.Clerk.__internal_openCheckout) {
+      if (window.Clerk?.__internal_openCheckout) {
         await window.Clerk.__internal_openCheckout({
-          planId: planId,
-          planPeriod: "month",
+          planId,
+          planPeriod: isYearly ? "annual" : "month",
           subscriberType: "user",
         });
       }
@@ -91,10 +97,27 @@ const PricingCard = ({
       )}
 
       <div className="text-center">
-        <h3 className="text-2xl font-bold text-white mb-2">{plan}</h3>
+        <div className="flex justify-center gap-6 my-4">
+          <h3 className="text-2xl font-bold text-white mb-2">{plan}</h3>
+
+          {monthAnnualPrice > 0 && <>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Switch checked={isYearly} onCheckedChange={setIsYearly} />
+              <span className={isYearly ? "text-white" : "text-gray-400"}>
+                Yearly{" "}
+                <span className="text-green-400 text-xs">
+                  ${yearlyPrice}
+                </span>
+              </span>
+            </div>
+          </>}
+        </div>
+
         <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-6">
-          ${price}
-          {price > 0 && <span className="text-lg text-gray-400">/month</span>}
+          ${isYearly ? monthAnnualPrice : price}
+          <span className="text-lg text-gray-400">
+            /month
+          </span>
         </div>
 
         <ul className="space-y-3 mb-8">
@@ -111,7 +134,7 @@ const PricingCard = ({
           size="xl"
           className="w-full"
           onClick={user ? handlePopup : handleSignIn}
-          disabled={user && (isCurrentPlan || !planId) ? true : false}
+          disabled={user && (isCurrentPlan || !planId)}
         >
           {isCurrentPlan ? "Current Plan" : buttonText}
         </Button>
