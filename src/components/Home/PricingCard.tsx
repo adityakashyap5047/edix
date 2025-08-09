@@ -95,14 +95,13 @@ const PricingCard = ({
           </div>
         </div>
       )}
-
-      <div className="text-center">
+      <div className="text-center flex flex-col h-full">
         <div className="flex justify-center gap-6 my-4">
           <h3 className="text-2xl font-bold text-white mb-2">{plan}</h3>
 
           {monthAnnualPrice > 0 && <>
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Switch checked={isYearly} onCheckedChange={setIsYearly} />
+              <Switch className="cursor-pointer" checked={isYearly} onCheckedChange={setIsYearly} />
               <span className={isYearly ? "text-white" : "text-gray-400"}>
                 Yearly{" "}
                 <span className="text-green-400 text-xs">
@@ -120,7 +119,7 @@ const PricingCard = ({
           </span>
         </div>
 
-        <ul className="space-y-3 mb-8">
+        <ul className="space-y-3 flex-1 mb-8">
           {features.map((feature, index) => (
             <li key={index} className="flex items-center text-gray-300">
               <span className="text-green-400 mr-3">✓</span>
@@ -134,7 +133,7 @@ const PricingCard = ({
           size="xl"
           className="w-full"
           onClick={user ? handlePopup : handleSignIn}
-          disabled={user && (isCurrentPlan || !planId)}
+          disabled={user && (isCurrentPlan || !planId) ? true : false}
         >
           {isCurrentPlan ? "Current Plan" : buttonText}
         </Button>
