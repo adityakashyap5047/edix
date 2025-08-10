@@ -1,6 +1,14 @@
 import { db } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import Imagekit from "imagekit";
+import axios from "axios";
+
+const imagekit = new Imagekit({
+    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
+    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+})
 
 export async function POST(request: NextRequest){
 
@@ -179,6 +187,20 @@ export async function DELETE(request: NextRequest) {
                 projectsUsed: existingUser.projectsUsed - 1,
             },
         });
+        const options = {
+            method: 'GET',
+            url: 'https://api.imagekit.io/v1/files',
+            params: {type: 'file', path: 'edix/projects', fileType: 'image'},
+            headers: {
+                Accept: 'application/json',
+                Authorization: 'Basic cHJpdmF0ZV84QUJCK2NZYndzS1BnMVQrcVlDNDF5V256dkE9Og=='
+            }
+        };
+
+        const { data: files3 } = await axios.request(options);
+        const { fileId } = files3?.find((file) => file.url.split("?")[0] === project.originalImageUrl);
+
+        await imagekit.deleteFile(fileId);
 
         return NextResponse.json(
             { message: "Project deleted successfully.", project: deletedProject },
