@@ -197,8 +197,8 @@ export async function DELETE(request: NextRequest) {
             }
         };
 
-        const { data: files3 } = await axios.request(options);
-        const { fileId } = files3?.find((file) => file.url.split("?")[0] === project.originalImageUrl);
+        const { data: files } = await axios.request(options);
+        const { fileId } = files?.find((file: {url: string, fileId: string}) => file.url.split("?")[0] === project.originalImageUrl);
 
         await imagekit.deleteFile(fileId);
 
