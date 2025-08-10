@@ -193,7 +193,7 @@ export async function DELETE(request: NextRequest) {
             params: {type: 'file', path: 'edix/projects', fileType: 'image'},
             headers: {
                 Accept: 'application/json',
-                Authorization: 'Basic cHJpdmF0ZV84QUJCK2NZYndzS1BnMVQrcVlDNDF5V256dkE9Og=='
+                Authorization: `Basic ${process.env.IMAGEKIT_TOKEN}`
             }
         };
 
