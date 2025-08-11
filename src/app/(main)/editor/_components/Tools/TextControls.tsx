@@ -104,11 +104,26 @@ const TextControls = ({project}: {project: Project}) => {
         return objects.some(obj => obj.type === "i-text" || obj.type === "text");
     }, [canvasEditor]);
 
+    const getLatestTextObject = useCallback(() => {
+        if (!canvasEditor) return null;
+        
+        const objects = canvasEditor.getObjects();
+        const textObjects = objects.filter(obj => obj.type === "i-text" || obj.type === "text");
+        
+        return textObjects.length > 0 ? textObjects[textObjects.length - 1] : null;
+    }, [canvasEditor]);
+
     useEffect(() => {
         if (!hasTextOnCanvas()) {
             addText();
+        } else {
+            const latestText = getLatestTextObject();
+            if (latestText && canvasEditor) {
+                canvasEditor.setActiveObject(latestText);
+                canvasEditor.requestRenderAll();
+            }
         }
-    }, [addText, hasTextOnCanvas]);
+    }, [addText, hasTextOnCanvas, getLatestTextObject, canvasEditor]);
 
     if (!canvasEditor) {
         return <div className="p-4">
