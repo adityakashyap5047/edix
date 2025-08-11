@@ -7,7 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { useCanvas } from '@/context/Context';
 import { Project } from '@/types'
 import { IText } from 'fabric';
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic, Trash2, Type, Underline } from 'lucide-react';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic, RotateCcw, Trash2, Type, Underline } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 const FONT_FAMILIES = [
@@ -223,14 +223,39 @@ const TextControls = ({project}: {project: Project}) => {
         setSelectedText(null);
     };
 
+    const handleTextReset = () => {
+        if (!canvasEditor) {
+            return;
+        }
+
+        const objects = canvasEditor.getObjects();
+        
+        const textObjects = objects.filter(obj => obj.type === "i-text" || obj.type === "text");
+        
+        textObjects.forEach(textObj => {
+            canvasEditor.remove(textObj);
+        });
+
+        canvasEditor.discardActiveObject();
+        setSelectedText(null);
+        
+        canvasEditor.requestRenderAll();
+    }
+
   return (
     <div className='space-y-6'>
         <div className="space-y-4">
-            <div>
-                <h3 className='text-sm font-medium text-white mb-2'>Add Text</h3>
-                <p className="text-xs text-white/70 mb-4">
-                    Click to add editable text to your canvas     
-                </p>
+            <div className='flex gap-6 justify-center'>
+                <div>
+                    <h3 className='text-sm font-medium text-white mb-2'>Add Text</h3>
+                    <p className="text-xs text-white/70 mb-4">
+                        Click to add editable text to your canvas     
+                    </p>
+                </div>
+                <Button variant={"glass"} onClick={handleTextReset} size={"sm"} className='text-white/70 hover:text-white'>
+                    <RotateCcw className='h-4 w-4 mr-2' />
+                    Reset
+                </Button>
             </div>
             <Button className='w-full hover:scale-101' onClick={addText} variant={"primary"}>
                 <Type className='h-4 w-4 mr-2' />
