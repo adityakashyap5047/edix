@@ -70,13 +70,7 @@ const TextControls = ({project}: {project: Project}) => {
         }
     }, [canvasEditor, updateSelectedText, project]);
 
-    if (!canvasEditor) {
-        return <div className="p-4">
-            <p className='text-white/70 text-sm'>Canvas not ready</p>
-        </div>
-    }
-
-    const addText = () => {
+    const addText = useCallback(() => {
         if (!canvasEditor) return;
 
         const text = new IText("Edit this text", {
@@ -100,6 +94,26 @@ const TextControls = ({project}: {project: Project}) => {
             text.enterEditing();
             text.selectAll();
         }, 100);
+    }, [canvasEditor, fontFamily, textColor, textAlign]);
+
+    const hasTextOnCanvas = useCallback(() => {
+        if (!canvasEditor) return false;
+        
+        const objects = canvasEditor.getObjects();
+        console.log(objects);
+        return objects.some(obj => obj.type === "i-text" || obj.type === "text");
+    }, [canvasEditor]);
+
+    useEffect(() => {
+        if (!hasTextOnCanvas()) {
+            addText();
+        }
+    }, [addText, hasTextOnCanvas]);
+
+    if (!canvasEditor) {
+        return <div className="p-4">
+            <p className='text-white/70 text-sm'>Canvas not ready</p>
+        </div>
     }
 
     const applyFontFamily = (fontFamily: string) => {
