@@ -8,7 +8,7 @@ import { useCanvas } from '@/context/Context';
 import { Project } from '@/types'
 import { IText } from 'fabric';
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic, RotateCcw, Trash2, Type, Underline } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 const FONT_FAMILIES = [
   "Arial",
@@ -141,7 +141,7 @@ const TextControls = ({project}: {project: Project}) => {
         return textObjects.length > 0 ? textObjects[textObjects.length - 1] : null;
     }, [canvasEditor]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!hasTextOnCanvas()) {
             addText();
         } else {
