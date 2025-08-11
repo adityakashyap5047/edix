@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useCanvas } from '@/context/Context';
 import { Project } from '@/types'
@@ -239,23 +240,28 @@ const TextControls = ({project}: {project: Project}) => {
 
         {selectedText && (
             <div className="border-t border-white/10 pt-6">
-                <h3 className="text-sm font-medium text-white mb-4">
+                <h3 className="text-sm text-center font-bold text-gray-500 mb-4">
                     Edit Selected Text
                 </h3>
 
                 <div className="space-y-2 mb-4">
                     <label className="text-xs text-white/70">Font Family</label>
-                    <select
-                        value={fontFamily}
-                        onChange={(e) => applyFontFamily(e.target.value)}
-                        className="w-full cursor-pointer px-3 py-2 my-2 bg-slate-700 border border-white/20 rounded text-white text-sm"
-                    >
-                        {FONT_FAMILIES.map((font) => (
-                            <option key={font} value={font}>
-                                {font}
-                            </option>
-                        ))}
-                    </select>
+                    <Select value={fontFamily} onValueChange={applyFontFamily}>
+                        <SelectTrigger className='w-full cursor-pointer !bg-slate-700'>
+                            <SelectValue placeholder="Select a font" />
+                        </SelectTrigger>
+                        <SelectContent className='!bg-slate-700'>
+                            {FONT_FAMILIES.map((font) => (
+                                <SelectItem 
+                                    className='cursor-pointer hover:!bg-slate-600 focus:!bg-slate-600 data-[highlighted]:!bg-slate-600 data-[state=checked]:!bg-slate-900' 
+                                    key={font} 
+                                    value={font}
+                                >
+                                    {font}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="space-y-2 mb-4">
