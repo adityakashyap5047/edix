@@ -126,10 +126,7 @@ const TextControls = ({project}: {project: Project}) => {
 
     const hasTextOnCanvas = useCallback(() => {
         if (!canvasEditor) return false;
-        
-        const objects = canvasEditor.getObjects();
-        console.log(objects);
-        return objects.some(obj => obj.type === "i-text" || obj.type === "text");
+        return canvasEditor.getObjects().some(obj => obj.type === "i-text" || obj.type === "text");
     }, [canvasEditor]);
 
     const getLatestTextObject = useCallback(() => {
@@ -170,7 +167,7 @@ const TextControls = ({project}: {project: Project}) => {
     const applyFontSize = (size: number[]) => {
         if (!selectedText || !canvasEditor) return;
 
-        const newSize =Array.isArray(size) ? size[0] : size;
+        const newSize = Array.isArray(size) ? size[0] : size;
         setFontSize(newSize);
         selectedText.set("fontSize", newSize);
         canvasEditor.requestRenderAll();

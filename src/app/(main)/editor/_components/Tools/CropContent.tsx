@@ -116,21 +116,21 @@ const CropContent = ({project}: {project: Project}) => {
   }, [isCropMode, canvasEditor, selectedImage, originalProps, removeAllCropRectangles]);
 
   useEffect(() => {
-    if (activeTool === "crop" && canvasEditor && isCropMode) {
-      const getProjectData = async() => {
+    if (activeTool === "crop" && canvasEditor) {
+      const canvasState = canvasEditor.toJSON();
+      const getProjectData = async () => {
         try {
           const response = await axios.get(`/api/projects/${project.id}`);
           const activeTransformations = response.data.activeTransformations;
-          if (!activeTransformations.split("-").some((item: string) => item.toLowerCase().startsWith("crop"))) {
-            const canvasState = canvasEditor.toJSON();
-            const activeTransformationsArr = activeTransformations.split("-");
-            activeTransformationsArr.push(`crop[${JSON.stringify(canvasState)}]`);
-            
-          }
+          const activeTransformationsArr = activeTransformations ? activeTransformations.split("-") : [];
+          activeTransformationsArr.push(`crop[${JSON.stringify(canvasState)}]`);
+          await axios.post(`/api/projects/${project.id}`, {
+            activeTransformations: activeTransformationsArr.join("-"),
+          });
         } catch (error) {
           console.error("Error fetching project data:", error);
         }
-      }
+      };
       getProjectData();
     }
   }, [activeTool, canvasEditor, isCropMode, project]);
@@ -431,62 +431,65 @@ const CropContent = ({project}: {project: Project}) => {
     }
   };
 
+  const extractJsonData = (str: string, operationName: string) => {
+    const pattern = `${operationName}[`;
+    const startIndex = str.indexOf(pattern);
+    if (startIndex === -1) return null;
+
+    let bracketCount = 0;
+    const jsonStart = startIndex + pattern.length;
+    let i = jsonStart;
+
+    for (; i < str.length; i++) {
+      if (str[i] === "[") bracketCount++;
+      else if (str[i] === "]") {
+        if (bracketCount === 0) break;
+        bracketCount--;
+      }
+    }
+
+    const jsonString = str.slice(jsonStart, i);
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error(`Invalid JSON for ${operationName}:`, e);
+      return null;
+    }
+  }
+
   const handleCropReset = async () => {
     if (!canvasEditor) return;
     
     try {
       const response = await axios.get(`/api/projects/${project.id}`);
-      const activeTransformations = response.data.activeTransformations;
-      
-      // Check if there are crop transformations to reset
-      const hasCropTransformations = activeTransformations && 
-        activeTransformations.split("-").some((item: string) => item.toLowerCase().startsWith("crop"));
-      console.log(activeTransformations.split("-"));
-      if (!hasCropTransformations) {
-        console.log("No crop transformations found to reset");
+      console.log(response);
+      const { activeTransformations } = response.data;
+      console.log("Active TransFormation", activeTransformations);
+      const hasCropTransformations = activeTransformations && activeTransformations.split("-").some((item: string) => item.toLowerCase().startsWith("crop"));
+      if (!hasCropTransformations) { 
         return;
       }
-      
-      console.log("Resetting crop transformations...");
-      
-      // Find the original canvas state (stored before crop transformations)
-      const cropTransformation = activeTransformations.split("-").find((item: string) => item.toLowerCase().startsWith("crop"));
-      
-      if (cropTransformation) {
-        // Extract canvas JSON (remove "crop" prefix)
-        const canvasJson = cropTransformation.slice(4); // Remove "crop" prefix
-        console.log("Restoring original canvas state:", canvasJson);
-        if (canvasJson) {
-          // Clear current canvas and load original state
-          canvasEditor.clear();
-          
-          try {
-            // Parse and load the original canvas state
-            const parsedCanvas = JSON.parse(canvasJson);
-            canvasEditor.loadFromJSON(parsedCanvas, () => {
-              console.log("Canvas restored to original state");
-              canvasEditor.requestRenderAll();
-            });
-          } catch (parseError) {
-            console.error("Error parsing canvas JSON:", parseError);
-            // Fallback: just clear crop rectangles
-            removeAllCropRectangles();
-          }
+      const canvasJson = extractJsonData(activeTransformations, "crop");
+      if (canvasJson) {
+        canvasEditor.clear();
+        try {
+          canvasEditor.loadFromJSON(canvasJson, () => {
+            canvasEditor.requestRenderAll();
+          });
+        } catch (parseError) {
+          console.error("Error parsing canvas JSON:", parseError);
+          removeAllCropRectangles();
         }
       }
-      
-      // Reset crop-related state
+
       setIsCropMode(false);
       setSelectedImage(null);
       setOriginalProps(null);
       setSelectedRatio(null);
       setCropRect(null);
       
-      console.log("Crop reset completed successfully");
-      
     } catch (error) {
       console.error("Error resetting crop:", error);
-      // Fallback: reset local state even if API call fails
       setIsCropMode(false);
       setSelectedImage(null);
       setOriginalProps(null);
