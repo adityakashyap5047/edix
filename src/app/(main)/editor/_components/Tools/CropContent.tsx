@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { useCanvas } from "@/context/Context";
+import { Project } from "@/types";
+import axios from "axios";
 import { FabricImage, Rect, FabricObject } from "fabric";
 import { CheckCheck, RectangleHorizontal, RectangleVertical, RotateCcw, Smartphone, Square, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -32,7 +34,7 @@ const ASPECT_RATIOS = [
   { label: "Story", value: 9 / 16, icon: Smartphone, ratio: "9:16" },
 ];
 
-const CropContent = () => {
+const CropContent = ({project}: {project: Project}) => {
 
   const{ canvasEditor, activeTool } = useCanvas();
 
@@ -115,15 +117,23 @@ const CropContent = () => {
 
   useEffect(() => {
     if (activeTool === "crop" && canvasEditor && isCropMode) {
-      const image = getActiveImage();
-
-      if (image) {
-        // initializeCropMode(image);
+      const getProjectData = async() => {
+        try {
+          const response = await axios.get(`/api/projects/${project.id}`);
+          const activeTransformations = response.data.activeTransformations;
+          if (!activeTransformations.split("-").some((item: string) => item.toLowerCase().startsWith("crop"))) {
+            const canvasState = canvasEditor.toJSON();
+            const activeTransformationsArr = activeTransformations.split("-");
+            activeTransformationsArr.push(`crop[${JSON.stringify(canvasState)}]`);
+            
+          }
+        } catch (error) {
+          console.error("Error fetching project data:", error);
+        }
       }
-    } else if (activeTool !== "crop" && isCropMode) {
-      exitCropMode();
+      getProjectData();
     }
-  }, [activeTool, canvasEditor, isCropMode, getActiveImage, exitCropMode]);
+  }, [activeTool, canvasEditor, isCropMode, project]);
 
   useEffect(() => {
     return () => {
@@ -421,8 +431,69 @@ const CropContent = () => {
     }
   };
 
-  const handleCropReset = () => {
+  const handleCropReset = async () => {
+    if (!canvasEditor) return;
     
+    try {
+      const response = await axios.get(`/api/projects/${project.id}`);
+      const activeTransformations = response.data.activeTransformations;
+      
+      // Check if there are crop transformations to reset
+      const hasCropTransformations = activeTransformations && 
+        activeTransformations.split("-").some((item: string) => item.toLowerCase().startsWith("crop"));
+      console.log(activeTransformations.split("-"));
+      if (!hasCropTransformations) {
+        console.log("No crop transformations found to reset");
+        return;
+      }
+      
+      console.log("Resetting crop transformations...");
+      
+      // Find the original canvas state (stored before crop transformations)
+      const cropTransformation = activeTransformations.split("-").find((item: string) => item.toLowerCase().startsWith("crop"));
+      
+      if (cropTransformation) {
+        // Extract canvas JSON (remove "crop" prefix)
+        const canvasJson = cropTransformation.slice(4); // Remove "crop" prefix
+        console.log("Restoring original canvas state:", canvasJson);
+        if (canvasJson) {
+          // Clear current canvas and load original state
+          canvasEditor.clear();
+          
+          try {
+            // Parse and load the original canvas state
+            const parsedCanvas = JSON.parse(canvasJson);
+            canvasEditor.loadFromJSON(parsedCanvas, () => {
+              console.log("Canvas restored to original state");
+              canvasEditor.requestRenderAll();
+            });
+          } catch (parseError) {
+            console.error("Error parsing canvas JSON:", parseError);
+            // Fallback: just clear crop rectangles
+            removeAllCropRectangles();
+          }
+        }
+      }
+      
+      // Reset crop-related state
+      setIsCropMode(false);
+      setSelectedImage(null);
+      setOriginalProps(null);
+      setSelectedRatio(null);
+      setCropRect(null);
+      
+      console.log("Crop reset completed successfully");
+      
+    } catch (error) {
+      console.error("Error resetting crop:", error);
+      // Fallback: reset local state even if API call fails
+      setIsCropMode(false);
+      setSelectedImage(null);
+      setOriginalProps(null);
+      setSelectedRatio(null);
+      setCropRect(null);
+      removeAllCropRectangles();
+    }
   }
 
   if (!canvasEditor) {
@@ -436,7 +507,7 @@ const CropContent = () => {
   return (
     <div className="space-y-6">
       { getActiveImage() && (
-        <div className="flex justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
+        <div className="flex gap-2 justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
           <div>
             <p className="text-cyan-400 text-sm font-medium">
               ✂️ Crop Mode Active
@@ -484,12 +555,12 @@ const CropContent = () => {
 
        {getActiveImage() && (
         <div className="space-y-3 pt-4 border-t border-white/10">
-          <Button onClick={applyCrop} className="w-full" variant="primary">
+          <Button disabled={!isCropMode} onClick={applyCrop} className="w-full" variant="primary">
             <CheckCheck className="h-4 w-4 mr-2" />
             Apply Crop
           </Button>
 
-          <Button variant="outline" onClick={() => exitCropMode()} className="w-full">
+          <Button disabled={!isCropMode} variant="outline" onClick={() => exitCropMode()} className="w-full">
             <X className="h-4 w-4 mr-2" />
             Cancel
           </Button>

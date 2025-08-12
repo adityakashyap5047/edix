@@ -91,7 +91,7 @@ function renderToolContent(activeTool: ToolId, project: Project) {
     case 'resize':
       return <ResizeControls project={project} />;
     case 'crop':
-      return <CropContent />;
+      return <CropContent project={project} />;
     case 'adjust':
       return <AdjustControls project={project} />;
     case 'background':
