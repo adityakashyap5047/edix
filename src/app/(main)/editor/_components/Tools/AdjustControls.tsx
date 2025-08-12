@@ -205,14 +205,22 @@ const AdjustControls = ({}: {project: Project}) => {
 
   return (
     <div className='space-y-6'>
-        <div className='flex items-center justify-between'>
-            <h3 className='text-sm font-medium text-white'>Image Adjustments</h3>
+        <div className="flex justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
+            <div>
+                <p className="text-cyan-400 text-sm font-medium">
+                    Adjust Image Properties
+                </p>
+                <p className="text-cyan-300/80 text-xs mt-1">
+                    Adjust the image properties using the sliders by sliding left and right.
+                </p>
+            </div>
             <Button variant={"ghost"} size={"sm"} onClick={resetFilter} className='text-white/70 hover:text-white'>
                 <RotateCcw className='h-4 w-4 mr-2' />
                 Reset
             </Button>
         </div>
-
+        <h3 className='text-sm text-center font-bold text-gray-500'>Change Image Adjustments</h3>
+        
         {
             FILTER_CONFIGS.map((config) => {
                 return (

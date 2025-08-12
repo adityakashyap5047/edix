@@ -29,7 +29,7 @@ const TOOL_CONFIGS: Partial<Record<ToolId, ToolConfig>> = {
   adjust: {
     title: "Adjust",
     icon: Sliders,
-    description: "Brightness, contrast, and more (Manual saving required)",
+    description: "Brightness, contrast, and more ...",
   },
   background: {
     title: "Background",
