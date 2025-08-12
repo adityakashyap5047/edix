@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCanvas } from "@/context/Context";
 import { FabricImage, Rect, FabricObject } from "fabric";
 import { CheckCheck, RectangleHorizontal, RectangleVertical, Smartphone, Square, X } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface OriginalProps {
@@ -148,19 +148,21 @@ const CropContent = () => {
       height: cropHeight,
       fill: "transparent",
       stroke: "#00bcd4",
-      strokeWidth: 2,
-      strokeDashArray: [5, 5],
+      strokeWidth: 3,
+      strokeDashArray: [8, 4],
       selectable: true,
       evented: true,
       name: "cropRect",
+      opacity: 1,
 
       // VISUAL STYLING FOR CROP HANDLES
       cornerColor: "#00bcd4",
-      cornerSize: 12,
+      cornerSize: 14,
       transparentCorners: false,
       cornerStyle: "circle",
       borderColor: "#00bcd4",
-      borderScaleFactor: 1,
+      borderScaleFactor: 1.5,
+      padding: 0,
 
       // Custom Property to identify crop rectangles
       isCropRectangle: true,
@@ -324,17 +326,26 @@ const CropContent = () => {
   };
 
   const applyCrop = () => {
-    if(!selectedImage || !cropRect) return;
+    if(!selectedImage || !cropRect || !canvasEditor) return;
 
     try {
       const cropBounds = cropRect.getBoundingRect();
-      const imageBounds = selectedImage.getBoundingRect();
+      
+      // Get the image's actual position and dimensions
+      const imageLeft = selectedImage.left || 0;
+      const imageTop = selectedImage.top || 0;
+      const imageWidth = (selectedImage.width || 0) * (selectedImage.scaleX || 1);
+      const imageHeight = (selectedImage.height || 0) * (selectedImage.scaleY || 1);
+      
+      // Calculate the actual image bounds
+      const actualImageLeft = imageLeft - (imageWidth / 2);
+      const actualImageTop = imageTop - (imageHeight / 2);
 
       // Calculate relative crop coordinates within the image
-      const relativeLeft = (cropBounds.left - imageBounds.left) / imageBounds.width;
-      const relativeTop = (cropBounds.top - imageBounds.top) / imageBounds.height;
-      const relativeWidth = cropBounds.width / imageBounds.width;
-      const relativeHeight = cropBounds.height / imageBounds.height;
+      const relativeLeft = (cropBounds.left - actualImageLeft) / imageWidth;
+      const relativeTop = (cropBounds.top - actualImageTop) / imageHeight;
+      const relativeWidth = cropBounds.width / imageWidth;
+      const relativeHeight = cropBounds.height / imageHeight;
 
       // Clamp values to ensure they're within image bounds
       const clampedLeft = Math.max(0, Math.min(1, relativeLeft));
@@ -356,13 +367,27 @@ const CropContent = () => {
       const fabricImageObject = selectedImage as FabricImage;
       const imageElement = fabricImageObject.getElement();
 
-      // Remove the original image and crop rectangle FIRST
-      canvasEditor?.remove(selectedImage);
-      canvasEditor?.remove(cropRect);
+      // Store the crop position for the new image
+      const newImageLeft = cropBounds.left + cropBounds.width / 2;
+      const newImageTop = cropBounds.top + cropBounds.height / 2;
+
+      // Clear all state FIRST to prevent conflicts
+      setIsCropMode(false);
+      setSelectedImage(null);
+      setOriginalProps(null);
+      setSelectedRatio(null);
+      setCropRect(null);
+
+      // Remove the original image and crop rectangle BEFORE adding new image
+      canvasEditor.remove(selectedImage);
+      canvasEditor.remove(cropRect);
+      
+      // Clear selection to avoid conflicts
+      canvasEditor.discardActiveObject();
 
       const croppedImage = new FabricImage(imageElement, {
-        left: cropBounds.left + cropBounds.width / 2,
-        top: cropBounds.top + cropBounds.height / 2,
+        left: newImageLeft,
+        top: newImageTop,
         originX: "center",
         originY: "center",
         selectable: true,
@@ -379,30 +404,22 @@ const CropContent = () => {
         scaleY: cropBounds.height / cropHeight,
       })
 
-      canvasEditor?.add(croppedImage);
-      canvasEditor?.setActiveObject(croppedImage);
-      canvasEditor?.requestRenderAll();
-
-      // Clean up state
-      setIsCropMode(false);
-      setSelectedImage(null);
-      setOriginalProps(null);
-      setSelectedRatio(null);
-      setCropRect(null);
+      canvasEditor.add(croppedImage);
+      canvasEditor.setActiveObject(croppedImage);
+      canvasEditor.requestRenderAll();
 
       toast.success("Crop applied successfully!");
     } catch (error) {
       console.error("Error applying crop:", error);
       toast.error("Failed to apply crop");
-      exitCropMode();
+      // If there's an error, make sure to properly exit crop mode
+      setIsCropMode(false);
+      setSelectedImage(null);
+      setOriginalProps(null);
+      setSelectedRatio(null);
+      setCropRect(null);
     }
   };
-
-  useLayoutEffect(() => {
-    const activeImage = getActiveImage() as FabricImage;
-
-    initializeCropMode(activeImage);
-  }, [canvasEditor, initializeCropMode, getActiveImage]);
 
   if (!canvasEditor) {
     return (
