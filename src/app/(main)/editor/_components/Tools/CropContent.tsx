@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useCanvas } from "@/context/Context";
 import { FabricImage, Rect, FabricObject } from "fabric";
-import { CheckCheck, RectangleHorizontal, RectangleVertical, Smartphone, Square, X } from "lucide-react";
+import { CheckCheck, RectangleHorizontal, RectangleVertical, RotateCcw, Smartphone, Square, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -421,6 +421,10 @@ const CropContent = () => {
     }
   };
 
+  const handleCropReset = () => {
+    
+  }
+
   if (!canvasEditor) {
     return (
       <div className="p-4">
@@ -432,13 +436,19 @@ const CropContent = () => {
   return (
     <div className="space-y-6">
       { getActiveImage() && (
-        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
-          <p className="text-cyan-400 text-sm font-medium">
-            ✂️ Crop Mode Active
-          </p>
-          <p className="text-cyan-300/80 text-xs mt-1">
-            {isCropMode ? "Adjust the blue rectangle to set crop area" : "Crop area not set"}
-          </p>
+        <div className="flex justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
+          <div>
+            <p className="text-cyan-400 text-sm font-medium">
+              ✂️ Crop Mode Active
+            </p>
+            <p className="text-cyan-300/80 text-xs mt-1">
+              {isCropMode ? "Adjust the blue rectangle to set crop area" : "Crop area not set"}
+            </p>
+          </div>
+          <Button variant={"glass"} size={"sm"} onClick={handleCropReset} className='text-white/70 hover:text-white'>
+            <RotateCcw className='h-4 w-4 mr-2' />
+            Reset
+          </Button>
         </div>
       )}
 
