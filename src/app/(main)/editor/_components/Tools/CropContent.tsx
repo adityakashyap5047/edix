@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useCanvas } from "@/context/Context";
 import { FabricImage, Rect, FabricObject } from "fabric";
-import { CheckCheck, Crop, Maximize, RectangleHorizontal, RectangleVertical, Smartphone, Square, X } from "lucide-react";
+import { CheckCheck, RectangleHorizontal, RectangleVertical, Smartphone, Square, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -133,7 +133,7 @@ const CropContent = () => {
     }
   }, [isCropMode, exitCropMode])
 
-  const createCropRectangle = (image: FabricObject) => {
+  const createCropRectangle = useCallback((image: FabricObject) => {
     const bounds = image.getBoundingRect();
 
     // Create crop rectangle slightly smaller than the image
@@ -237,9 +237,9 @@ const CropContent = () => {
     canvasEditor?.add(cropRectangle);
     canvasEditor?.setActiveObject(cropRectangle);
     setCropRect(cropRectangle);
-  }
+  }, [canvasEditor, selectedRatio]);
 
-  const initializeCropMode = (image: FabricObject) => {
+  const initializeCropMode = useCallback((image: FabricObject) => {
     if (!canvasEditor || !image || isCropMode) return;
 
     removeAllCropRectangles();
@@ -267,7 +267,7 @@ const CropContent = () => {
 
     createCropRectangle(image);
     canvasEditor.requestRenderAll();
-  };
+  }, [canvasEditor, isCropMode, removeAllCropRectangles, createCropRectangle]);
 
   const handleAspectRatioClick = (ratio: number) => {
     if (!isCropMode) {
@@ -402,7 +402,7 @@ const CropContent = () => {
     const activeImage = getActiveImage() as FabricImage;
 
     initializeCropMode(activeImage);
-  }, [canvasEditor]);
+  }, [canvasEditor, initializeCropMode, getActiveImage]);
 
   if (!canvasEditor) {
     return (
@@ -411,8 +411,6 @@ const CropContent = () => {
       </div>
     );
   }
-
-  const activeImage = getActiveImage();
 
   return (
     <div className="space-y-6">
@@ -426,17 +424,6 @@ const CropContent = () => {
           </p>
         </div>
       )}
-
-      {/* { !isCropMode && activeImage && (
-        <Button
-          className="w-full hover:!scale-101"
-          onClick={() => initializeCropMode(activeImage)}
-          variant={"primary"}
-        >
-          <Crop className="h-4 w-4 mr-2" />
-          Start Cropping
-        </Button>
-      ) } */}
 
       {/* Show aspect ratios when there's an image available, regardless of crop mode */}
       {getActiveImage() && (
