@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCanvas } from "@/context/Context";
 import { FabricImage, Rect, FabricObject } from "fabric";
 import { CheckCheck, Crop, Maximize, RectangleHorizontal, RectangleVertical, Smartphone, Square, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface OriginalProps {
@@ -20,7 +20,7 @@ interface OriginalProps {
 }
 
 const ASPECT_RATIOS = [
-  { label: "Freeform", value: null, icon: Maximize },
+  // { label: "Freeform", value: 3 / 4, icon: Maximize },
   { label: "Square", value: 1, icon: Square, ratio: "1:1" },
   {
     label: "Widescreen",
@@ -42,7 +42,6 @@ const CropContent = () => {
   const [cropRect, setCropRect] = useState<Rect | null>(null);
   const [originalProps, setOriginalProps] = useState<OriginalProps | null>(null);
 
-  // Get the currently selected or main image
   const getActiveImage = useCallback(() => {
     if (!canvasEditor) return null;
 
@@ -270,6 +269,23 @@ const CropContent = () => {
     canvasEditor.requestRenderAll();
   };
 
+  const handleAspectRatioClick = (ratio: number) => {
+    if (!isCropMode) {
+      // If not in crop mode, first initialize crop mode
+      const image = getActiveImage();
+      if (image) {
+        initializeCropMode(image);
+        // Set the ratio after a short delay to ensure crop rectangle is created
+        setTimeout(() => {
+          applyAspectRatio(ratio);
+        }, 100);
+      }
+    } else {
+      // If already in crop mode, just apply the aspect ratio
+      applyAspectRatio(ratio);
+    }
+  };
+
   const applyAspectRatio = (ratio: number | null) => {
     setSelectedRatio(ratio);
 
@@ -297,7 +313,7 @@ const CropContent = () => {
     });
 
     // Update coordinates and reselect to show new controls
-    cropRect.setCoords();
+    cropRect.setCoords(); 
     canvasEditor.setActiveObject(cropRect);
     canvasEditor.requestRenderAll();
     
@@ -382,6 +398,12 @@ const CropContent = () => {
     }
   };
 
+  useLayoutEffect(() => {
+    const activeImage = getActiveImage() as FabricImage;
+
+    initializeCropMode(activeImage);
+  }, [canvasEditor]);
+
   if (!canvasEditor) {
     return (
       <div className="p-4">
@@ -394,18 +416,18 @@ const CropContent = () => {
 
   return (
     <div className="space-y-6">
-      { isCropMode && (
+      { getActiveImage() && (
         <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
           <p className="text-cyan-400 text-sm font-medium">
             ✂️ Crop Mode Active
           </p>
           <p className="text-cyan-300/80 text-xs mt-1">
-            Adjust the blue rectangle to set crop area
+            {isCropMode ? "Adjust the blue rectangle to set crop area" : "Crop area not set"}
           </p>
         </div>
       )}
 
-      { !isCropMode && activeImage && (
+      {/* { !isCropMode && activeImage && (
         <Button
           className="w-full hover:!scale-101"
           onClick={() => initializeCropMode(activeImage)}
@@ -414,12 +436,13 @@ const CropContent = () => {
           <Crop className="h-4 w-4 mr-2" />
           Start Cropping
         </Button>
-      ) }
+      ) } */}
 
-      {isCropMode && (
+      {/* Show aspect ratios when there's an image available, regardless of crop mode */}
+      {getActiveImage() && (
         <div>
           <h3 className="text-sm font-medium text-white mb-3">
-            Crop Aspect Ratios
+            {isCropMode ? "Crop Aspect Ratios" : "Select Crop Aspect Ratio"}
           </h3>
           <div className="grid grid-cols-3 gap-4">
             {ASPECT_RATIOS.map((ratio) => {
@@ -428,7 +451,7 @@ const CropContent = () => {
               return (
                 <button 
                   key={ratio.label}
-                  onClick={() => applyAspectRatio(ratio.value)}
+                  onClick={() => handleAspectRatioClick(ratio.value)}
                   className={`cursor-pointer text-center p-3 border rounded-sm transition-color ${selectedRatio === ratio.value ? "border-cyan-400 bg-cyan-400/10": "border-white/20 hover:border-white/40 hover:bg-white/5"}`}
                 >
                   <div>
@@ -445,7 +468,7 @@ const CropContent = () => {
         </div>
       )}
 
-       {isCropMode && (
+       {getActiveImage() && (
         <div className="space-y-3 pt-4 border-t border-white/10">
           <Button onClick={applyCrop} className="w-full" variant="primary">
             <CheckCheck className="h-4 w-4 mr-2" />
