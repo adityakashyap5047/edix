@@ -457,14 +457,33 @@ const TextControls = ({project}: {project: Project}) => {
             </Button>
         </div>
 
-        <div className="bg-slate-700/30 rounded-lg p-3">
-            <p className="text-xs text-white/70">
-            <strong>Configure</strong> your text style above, then click <strong>Add Text</strong>.
-            <br />
-            <strong>Select</strong> text on canvas to format it or delete it.
-            <br />
-            <strong>Reset</strong> clears all text and resets configuration.
-            </p>
+        <div className="p-3 bg-emerald-900/20 border border-emerald-500/30 rounded-sm">
+            <h4 className="text-xs font-medium text-emerald-300 mb-3 flex items-center gap-2">
+                💡 Quick Guide
+            </h4>
+            <div className="space-y-2 text-xs text-emerald-200/80">
+                <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">1.</span>
+                    <span><strong className="text-emerald-200">Configure</strong> your text style above (font, size, color, formatting)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">2.</span>
+                    <span><strong className="text-emerald-200">Add Text</strong> button creates text with your settings</span>
+                </div>
+                <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">3.</span>
+                    <span><strong className="text-emerald-200">Select</strong> text on canvas to edit, format, or delete it</span>
+                </div>
+                <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">4.</span>
+                    <span><strong className="text-emerald-200">Reset</strong> clears all text and resets to defaults</span>
+                </div>
+            </div>
+            <div className="mt-3 pt-2 border-t border-emerald-500/20">
+                <p className="text-xs text-emerald-300/70 italic">
+                    💡 Tip: Double-click text on canvas for quick editing
+                </p>
+            </div>
         </div>
     </div>
   )
