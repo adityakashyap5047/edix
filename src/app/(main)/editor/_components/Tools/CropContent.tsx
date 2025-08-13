@@ -5,7 +5,7 @@ import { useCanvas } from "@/context/Context";
 import { Project } from "@/types";
 import axios from "axios";
 import { FabricImage, Rect, FabricObject } from "fabric";
-import { CheckCheck, RectangleHorizontal, RectangleVertical, RotateCcw, Smartphone, Square, X } from "lucide-react";
+import { CheckCheck, RectangleHorizontal, RectangleVertical, RotateCcw, Smartphone, Square, X, MoveDown, MoveUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -43,6 +43,70 @@ const CropContent = ({project}: {project: Project}) => {
   const [selectedRatio, setSelectedRatio] = useState<number | null>(null);
   const [cropRect, setCropRect] = useState<Rect | null>(null);
   const [originalProps, setOriginalProps] = useState<OriginalProps | null>(null);
+
+  // Helper function to maintain proper layer order after crop
+  const maintainLayerOrder = useCallback((newImage: FabricObject, originalIndex: number) => {
+    if (!canvasEditor) return;
+    
+    // Get all objects that were above the original image
+    const allObjects = canvasEditor.getObjects();
+    const objectsAbove: FabricObject[] = [];
+    
+    // Find objects that should remain above the image (especially text)
+    for (let i = originalIndex + 1; i < allObjects.length; i++) {
+      const obj = allObjects[i];
+      if (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox') {
+        objectsAbove.push(obj);
+      }
+    }
+    
+    // If there are objects that should be above, bring them to front
+    if (objectsAbove.length > 0) {
+      objectsAbove.forEach(obj => {
+        canvasEditor.bringObjectToFront(obj);
+      });
+      canvasEditor.requestRenderAll();
+    }
+  }, [canvasEditor]);
+
+  // Helper function to send selected image behind text
+  const sendImageBehindText = useCallback(() => {
+    if (!canvasEditor) return;
+    
+    const activeObject = canvasEditor.getActiveObject();
+    if (activeObject && activeObject.type === 'image') {
+      // Get all text objects
+      const allObjects = canvasEditor.getObjects();
+      const textObjects = allObjects.filter(obj => 
+        obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox'
+      );
+      
+      if (textObjects.length > 0) {
+        // Send image to back
+        canvasEditor.sendObjectToBack(activeObject);
+        
+        // Then bring text objects forward
+        textObjects.forEach(textObj => {
+          canvasEditor.bringObjectToFront(textObj);
+        });
+        
+        canvasEditor.requestRenderAll();
+        toast.success("Image moved behind text");
+      }
+    }
+  }, [canvasEditor]);
+
+  // Helper function to bring selected image in front of text
+  const bringImageInFrontOfText = useCallback(() => {
+    if (!canvasEditor) return;
+    
+    const activeObject = canvasEditor.getActiveObject();
+    if (activeObject && activeObject.type === 'image') {
+      canvasEditor.bringObjectToFront(activeObject);
+      canvasEditor.requestRenderAll();
+      toast.success("Image moved in front of text");
+    }
+  }, [canvasEditor]);
 
   const getActiveImage = useCallback(() => {
     if (!canvasEditor) return null;
@@ -341,6 +405,9 @@ const CropContent = ({project}: {project: Project}) => {
     try {
       const cropBounds = cropRect.getBoundingRect();
       
+      // Store the original image's layer index BEFORE removing it
+      const originalImageIndex = canvasEditor.getObjects().indexOf(selectedImage);
+      
       // Get the image's actual position and dimensions
       const imageLeft = selectedImage.left || 0;
       const imageTop = selectedImage.top || 0;
@@ -414,7 +481,15 @@ const CropContent = ({project}: {project: Project}) => {
         scaleY: cropBounds.height / cropHeight,
       })
 
-      canvasEditor.add(croppedImage);
+      // Insert the cropped image at the same layer position as the original image
+      if (originalImageIndex >= 0) {
+        canvasEditor.insertAt(originalImageIndex, croppedImage);
+        // Maintain proper layer order for text elements
+        maintainLayerOrder(croppedImage, originalImageIndex);
+      } else {
+        canvasEditor.add(croppedImage);
+      }
+      
       canvasEditor.setActiveObject(croppedImage);
       canvasEditor.requestRenderAll();
 
@@ -567,6 +642,36 @@ const CropContent = ({project}: {project: Project}) => {
             <X className="h-4 w-4 mr-2" />
             Cancel
           </Button>
+        </div>
+      )}
+
+      {/* Layer Controls - Show when image is selected but not in crop mode */}
+      {getActiveImage() && !isCropMode && (
+        <div className="space-y-3 pt-4 border-t border-white/10">
+          <div className="text-sm font-medium text-white mb-2">Layer Controls</div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              onClick={sendImageBehindText} 
+              variant="outline" 
+              size="sm"
+              className="text-xs"
+            >
+              <MoveDown className="h-3 w-3 mr-1" />
+              Behind Text
+            </Button>
+            <Button 
+              onClick={bringImageInFrontOfText} 
+              variant="outline" 
+              size="sm"
+              className="text-xs"
+            >
+              <MoveUp className="h-3 w-3 mr-1" />
+              Front of Text
+            </Button>
+          </div>
+          <p className="text-xs text-white/60">
+            Control whether the image appears behind or in front of text elements.
+          </p>
         </div>
       )}
 
