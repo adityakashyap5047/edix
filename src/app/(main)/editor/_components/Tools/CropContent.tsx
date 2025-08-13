@@ -23,7 +23,6 @@ interface OriginalProps {
 }
 
 const ASPECT_RATIOS = [
-  // { label: "Freeform", value: 3 / 4, icon: Maximize },
   { label: "Square", value: 1, icon: Square, ratio: "1:1" },
   {
     label: "Widescreen",
@@ -37,7 +36,7 @@ const ASPECT_RATIOS = [
 
 const CropContent = ({project}: {project: Project}) => {
 
-  const{ canvasEditor, activeTool } = useCanvas();
+  const{ canvasEditor, activeTool, setProcessingMessage } = useCanvas();
 
   const [selectedImage, setSelectedImage] = useState<FabricObject | null>(null);
   const [isCropMode, setIsCropMode] = useState(false);
@@ -46,7 +45,6 @@ const CropContent = ({project}: {project: Project}) => {
   const [originalProps, setOriginalProps] = useState<OriginalProps | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Helper function to maintain proper layer order after crop
   const maintainLayerOrder = useCallback((newImage: FabricObject, originalIndex: number) => {
     if (!canvasEditor) return;
     
@@ -71,7 +69,6 @@ const CropContent = ({project}: {project: Project}) => {
     }
   }, [canvasEditor]);
 
-  // Helper function to send selected image behind text
   const sendImageBehindText = useCallback(() => {
     if (!canvasEditor) return;
     
@@ -98,7 +95,6 @@ const CropContent = ({project}: {project: Project}) => {
     }
   }, [canvasEditor]);
 
-  // Helper function to bring selected image in front of text
   const bringImageInFrontOfText = useCallback(() => {
     if (!canvasEditor) return;
     
@@ -181,35 +177,49 @@ const CropContent = ({project}: {project: Project}) => {
     canvasEditor.requestRenderAll();
   }, [isCropMode, canvasEditor, selectedImage, originalProps, removeAllCropRectangles]);
 
+  const extractJsonData = (str: string, operationName: string) => {
+    if (!str || typeof str !== "string") return null;
+    const pattern = `${operationName}[`;
+    const startIndex = str.indexOf(pattern);
+    if (startIndex === -1) return null;
+
+    let bracketCount = 0;
+    const jsonStart = startIndex + pattern.length;
+    let i = jsonStart;
+
+    for (; i < str.length; i++) {
+      if (str[i] === "[") bracketCount++;
+      else if (str[i] === "]") {
+        if (bracketCount === 0) break;
+        bracketCount--;
+      }
+    }
+
+    const jsonString = str.slice(jsonStart, i);
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error(`Invalid JSON for ${operationName}:`, e);
+      return null;
+    }
+  }
+
   useEffect(() => {
-    if (activeTool === "crop" && canvasEditor) {
+    if (activeTool === "crop" && canvasEditor) { 
       setLoading(true);
       const canvasState = canvasEditor.toJSON();
       const getProjectData = async () => {
         try {
           const response = await axios.get(`/api/projects/${project.id}`);
-          const activeTransformations = response.data.activeTransformations;
-          const activeTransformationsArr = activeTransformations ? activeTransformations.split("-") : [];
-          
-          // Check if there's already a crop transformation
-          const existingCropIndex = activeTransformationsArr.findIndex((item: string) => 
-            item.toLowerCase().startsWith("crop[")
-          );
-          console.log(existingCropIndex);
-          
-          const newCropData = `crop[${JSON.stringify(canvasState)}]`;
-          
-          if (existingCropIndex !== -1) {
-            // Replace existing crop transformation
-            activeTransformationsArr[existingCropIndex] = newCropData;
+          let activeTransformations = response.data.activeTransformations;
+          const canvasJson = extractJsonData(activeTransformations, "crop");
+          if (canvasJson) {
+            activeTransformations = activeTransformations.replace(`crop[${JSON.stringify(canvasJson)}]`, `crop[${JSON.stringify(canvasState)}]`);
           } else {
-            // Add new crop transformation
-            activeTransformationsArr.push(newCropData);
+            activeTransformations = activeTransformations ? activeTransformations + `-crop[${JSON.stringify(canvasState)}]` : `crop[${JSON.stringify(canvasState)}]`;
           }
-          console.log(activeTransformations);
-          
           await axios.post(`/api/projects/${project.id}`, {
-            activeTransformations: activeTransformationsArr.join("-"),
+            activeTransformations,
           });
         } catch (error) {
           console.error("Error fetching project data:", error);
@@ -528,40 +538,13 @@ const CropContent = ({project}: {project: Project}) => {
     }
   };
 
-  const extractJsonData = (str: string, operationName: string) => {
-    const pattern = `${operationName}[`;
-    const startIndex = str.indexOf(pattern);
-    if (startIndex === -1) return null;
-
-    let bracketCount = 0;
-    const jsonStart = startIndex + pattern.length;
-    let i = jsonStart;
-
-    for (; i < str.length; i++) {
-      if (str[i] === "[") bracketCount++;
-      else if (str[i] === "]") {
-        if (bracketCount === 0) break;
-        bracketCount--;
-      }
-    }
-
-    const jsonString = str.slice(jsonStart, i);
-    try {
-      return JSON.parse(jsonString);
-    } catch (e) {
-      console.error(`Invalid JSON for ${operationName}:`, e);
-      return null;
-    }
-  }
-
   const handleCropReset = async () => {
     if (!canvasEditor) return;
     
     try {
+      setProcessingMessage("Resetting the crop...");
       const response = await axios.get(`/api/projects/${project.id}`);
-      console.log(response);
       const { activeTransformations } = response.data;
-      console.log("Active TransFormation", activeTransformations);
       const hasCropTransformations = activeTransformations && activeTransformations.split("-").some((item: string) => item.toLowerCase().startsWith("crop"));
       if (!hasCropTransformations) { 
         return;
@@ -593,6 +576,8 @@ const CropContent = ({project}: {project: Project}) => {
       setSelectedRatio(null);
       setCropRect(null);
       removeAllCropRectangles();
+    } finally {
+      setProcessingMessage("");
     }
   }
 
@@ -617,7 +602,7 @@ const CropContent = ({project}: {project: Project}) => {
               {isCropMode ? "Adjust the blue rectangle to set crop area" : "Crop area not set"}
             </p>
           </div>
-          <Button variant={"glass"} size={"sm"} onClick={handleCropReset} className='text-white/70 hover:text-white'>
+          <Button disabled={loading} variant={"glass"} size={"sm"} onClick={handleCropReset} className='text-white/70 hover:text-white'>
             <RotateCcw className='h-4 w-4 mr-2' />
             Reset
           </Button>
