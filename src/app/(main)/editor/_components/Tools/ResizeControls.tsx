@@ -189,23 +189,12 @@ const ResizeControls = ({project}: {project: Project}) => {
       canvasEditor.calcOffset();
       canvasEditor.requestRenderAll();
 
-      let updatedTransformations = "";
-      if (project.activeTransformations && project.activeTransformations.trim() !== "") {
-        const existingTransformations = project.activeTransformations.trim();
-        const transformationsList = existingTransformations.split('-');
-        
-        const filteredTransformations = transformationsList.filter(transform => transform !== "resize");
-        
-        updatedTransformations = filteredTransformations.join('-');
-      }
-
       const canvasJSON = canvasEditor.toJSON();
       
       const response = await axios.post(`/api/projects/${project.id}`, {
         width: availableWidth,
         height: availableHeight,
         canvasState: canvasJSON,
-        activeTransformations: updatedTransformations || null
       }, {
         headers: {
           "Content-Type": "application/json"
@@ -307,23 +296,10 @@ const ResizeControls = ({project}: {project: Project}) => {
 
       const canvasJSON = canvasEditor.toJSON();
       
-      let updatedTransformations = "resize";
-      if (project.activeTransformations && project.activeTransformations.trim() !== "") {
-        const existingTransformations = project.activeTransformations.trim();
-        const transformationsList = existingTransformations.split('-');
-        
-        if (!transformationsList.includes("resize")) {
-          updatedTransformations = `${existingTransformations}-resize`;
-        } else {
-          updatedTransformations = existingTransformations;
-        }
-      }
-      
       const response = await axios.post(`/api/projects/${project.id}`, {
         width: newWidth,
         height: newHeight,
         canvasState: canvasJSON,
-        activeTransformations: updatedTransformations
       }, {
         headers: {
           "Content-Type": "application/json"
