@@ -7,6 +7,7 @@ import axios from "axios";
 import { FabricImage, Rect, FabricObject } from "fabric";
 import { CheckCheck, RectangleHorizontal, RectangleVertical, RotateCcw, Smartphone, Square, X, MoveDown, MoveUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { BarLoader } from "react-spinners";
 import { toast } from "sonner";
 
 interface OriginalProps {
@@ -43,6 +44,7 @@ const CropContent = ({project}: {project: Project}) => {
   const [selectedRatio, setSelectedRatio] = useState<number | null>(null);
   const [cropRect, setCropRect] = useState<Rect | null>(null);
   const [originalProps, setOriginalProps] = useState<OriginalProps | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   // Helper function to maintain proper layer order after crop
   const maintainLayerOrder = useCallback((newImage: FabricObject, originalIndex: number) => {
@@ -181,23 +183,43 @@ const CropContent = ({project}: {project: Project}) => {
 
   useEffect(() => {
     if (activeTool === "crop" && canvasEditor) {
+      setLoading(true);
       const canvasState = canvasEditor.toJSON();
       const getProjectData = async () => {
         try {
           const response = await axios.get(`/api/projects/${project.id}`);
           const activeTransformations = response.data.activeTransformations;
           const activeTransformationsArr = activeTransformations ? activeTransformations.split("-") : [];
-          activeTransformationsArr.push(`crop[${JSON.stringify(canvasState)}]`);
+          
+          // Check if there's already a crop transformation
+          const existingCropIndex = activeTransformationsArr.findIndex((item: string) => 
+            item.toLowerCase().startsWith("crop[")
+          );
+          console.log(existingCropIndex);
+          
+          const newCropData = `crop[${JSON.stringify(canvasState)}]`;
+          
+          if (existingCropIndex !== -1) {
+            // Replace existing crop transformation
+            activeTransformationsArr[existingCropIndex] = newCropData;
+          } else {
+            // Add new crop transformation
+            activeTransformationsArr.push(newCropData);
+          }
+          console.log(activeTransformations);
+          
           await axios.post(`/api/projects/${project.id}`, {
             activeTransformations: activeTransformationsArr.join("-"),
           });
         } catch (error) {
           console.error("Error fetching project data:", error);
+        } finally {
+          setLoading(false);
         }
       };
       getProjectData();
     }
-  }, [activeTool, canvasEditor, isCropMode, project]);
+  }, [activeTool, canvasEditor, project]);
 
   useEffect(() => {
     return () => {
@@ -584,6 +606,7 @@ const CropContent = ({project}: {project: Project}) => {
 
   return (
     <div className="space-y-6">
+      {loading && <BarLoader width={"100%"} color="#00bcd4" />}
       { getActiveImage() && (
         <div className="flex gap-2 justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
           <div>
