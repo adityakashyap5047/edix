@@ -308,178 +308,178 @@ const TopBar = ({project}: {project: Project}) => {
   return (
     <>
             {/* Mobile/Tablet Layout */}
-            <div className="lg:hidden">
-                {/* Top Row - Back button and Hamburger menu */}
-                <div className="flex items-center justify-between mb-3">
-                    <Button variant={"ghost"} size={"sm"} onClick={handleBackToDashboard} className="text-white hover:text-gray-300">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
+        <div className="lg:hidden">
+            {/* Top Row - Back button and Hamburger menu */}
+            <div className="flex items-center justify-between mb-3">
+                <Button variant={"ghost"} size={"sm"} onClick={handleBackToDashboard} className="text-white hover:text-gray-300">
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
 
-                    <h1 className="font-extrabold uppercase text-sm sm:text-base truncate mx-2">{project.title}</h1>
+                <h1 className="font-extrabold uppercase text-sm sm:text-base truncate mx-2">{project.title}</h1>
 
-                    {/* Hamburger Menu for Actions */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-white">
-                                <Menu className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 bg-slate-800 border-slate-700">
-                            <DropdownMenuItem 
-                                onClick={handleResetToOriginal}
-                                disabled={isReseting || !project.originalImageUrl}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                            >
-                                {isReseting ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                        Resetting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <RefreshCcw className="h-4 w-4 mr-2" />
-                                        Reset
-                                    </>
-                                )}
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem 
-                                onClick={handleManualSave}
-                                disabled={isSaving || !canvasEditor}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                        Saving...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="h-4 w-4 mr-2" />
-                                        Save
-                                    </>
-                                )}
-                            </DropdownMenuItem>
-                            
-                            {/* Export with separate dropdown menu */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <div 
-                                        className="text-white hover:bg-slate-700 cursor-pointer flex items-center px-2 py-1.5 text-sm rounded-sm"
-                                    >
-                                        {isExporting ? (
-                                            <>
-                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                                Exporting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <DownloadIcon className="h-4 w-4 mr-2" />
-                                                Export
-                                                <ChevronDown className="h-3 w-3 ml-auto" />
-                                            </>
-                                        )}
-                                    </div>
-                                </DropdownMenuTrigger>
-                                
-                                <DropdownMenuContent 
-                                    align="end" 
-                                    side="right"
-                                    className="w-56 bg-slate-800 border-slate-700"
+                {/* Hamburger Menu for Actions */}
+                <DropdownMenu open={isSaving || isReseting || isExporting ? true : undefined}>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="text-white">
+                            <Menu className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="mx-4 w-48 bg-slate-800 border-slate-700">
+                        <DropdownMenuItem 
+                            onClick={handleResetToOriginal}
+                            disabled={isReseting || !project.originalImageUrl}
+                            className="text-white hover:bg-slate-700 cursor-pointer"
+                        >
+                            {isReseting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    Resetting...
+                                </>
+                            ) : (
+                                <>
+                                    <RefreshCcw className="h-4 w-4 mr-2" />
+                                    Reset
+                                </>
+                            )}
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuItem 
+                            onClick={handleManualSave}
+                            disabled={isSaving || !canvasEditor}
+                            className="text-white hover:bg-slate-700 cursor-pointer"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Save
+                                </>
+                            )}
+                        </DropdownMenuItem>
+                        
+                        {/* Export with separate dropdown menu */}
+                        <DropdownMenu open={isExporting ? true : undefined}>
+                            <DropdownMenuTrigger asChild>
+                                <div 
+                                    className="text-white hover:bg-slate-700 cursor-pointer flex items-center px-2 py-1.5 text-sm rounded-sm"
                                 >
-                                    <div className="px-3 py-2 text-sm text-white/70 border-b border-slate-700">
-                                        Export Resolution: {project.width} × {project.height}px
-                                    </div>
-                                    
-                                    {EXPORT_FORMATS.map((config, index) => (
-                                        <DropdownMenuItem
-                                            key={index}
-                                            onClick={() => handleExport(config)}
-                                            className="text-white hover:bg-slate-700 cursor-pointer flex items-center gap-2"
-                                        >
-                                            <FileImage className="h-4 w-4" />
-                                            <div className="flex-1">
-                                                <div className="font-medium text-sm">{config.label}</div>
-                                                <div className="text-xs text-white/50">
-                                                    {config.format} • {Math.round(config.quality * 100)}% quality
-                                                </div>
-                                            </div>
-                                        </DropdownMenuItem>
-                                    ))}
-                                    
-                                    {isFree && (
+                                    {isExporting ? (
                                         <>
-                                            <DropdownMenuSeparator className="bg-slate-700" />
-                                            <div className="px-3 py-2 text-xs text-white/50">
-                                                Free: {user?.exportsThisMonth || 0}/20 exports
-                                                <div className="text-amber-400 mt-1">
-                                                    Upgrade for unlimited
-                                                </div>
-                                            </div>
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            Exporting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <DownloadIcon className="h-4 w-4 mr-2" />
+                                            Export
+                                            <ChevronDown className="h-3 w-3 ml-auto" />
                                         </>
                                     )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
-                            {isFree && (
-                                <div className="px-3 py-2 text-xs text-white/50">
-                                    Free Plan: {user?.exportsThisMonth || 0}/20 exports this month
-                                    <div className="text-amber-400 mt-1">
-                                        Upgrade to Pro for unlimited exports
-                                    </div>
                                 </div>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-
-                {/* Bottom Row - Undo/Redo and Tools */}
-                <div className="flex items-center gap-2">
-
-                    {/* Horizontal Scrolling Tools */}
-                    <div className="flex-1 overflow-x-auto">
-                        <div className="flex items-center gap-1 pb-1" style={{minWidth: 'max-content'}}>
-                            {TOOLS.map((tool) => {
-                                const Icon = tool.icon;
-                                const isActive = activeTool === tool.id;
-                                const hasToolAccess = hasAccess(tool.id as PremiumTool);
-
-                                return (
-                                    <Button 
-                                        key={tool.id}
-                                        variant={isActive ? "default" : "ghost"}
-                                        size={'sm'}
-                                        onClick={() => handleToolChange(tool.id as ToolId)}
-                                        className={`gap-2 relative whitespace-nowrap flex-shrink-0 ${
-                                            isActive
-                                                ? "bg-blue-600 text-white hover:bg-blue-700"
-                                                : "text-white hover:text-gray-300 hover:bg-gray-100"
-                                            }
-                                            ${!hasToolAccess ? "opacity-60" : ""}
-                                        `}
+                            </DropdownMenuTrigger>
+                            
+                            <DropdownMenuContent 
+                                align="end" 
+                                side="right"
+                                className="w-56 mx-4 bg-slate-800 border-slate-700"
+                            >
+                                <div className="px-3 py-2 text-sm text-white/70 border-b border-slate-700">
+                                    Export Resolution: {project.width} × {project.height}px
+                                </div>
+                                
+                                {EXPORT_FORMATS.map((config, index) => (
+                                    <DropdownMenuItem
+                                        key={index}
+                                        onClick={() => handleExport(config)}
+                                        className="text-white hover:bg-slate-700 cursor-pointer flex items-center gap-2"
                                     >
-                                        <Icon className="h-4 w-4" />
-                                        <span>{tool.label}</span>
-                                        {tool.proOnly && !hasToolAccess && (
-                                            <Lock className="h-3 w-3 text-amber-400" />
-                                        )}
-                                    </Button>
-                                )
-                            })}
-                        </div>
-                    </div>
+                                        <FileImage className="h-4 w-4" />
+                                        <div className="flex-1">
+                                            <div className="font-medium text-sm">{config.label}</div>
+                                            <div className="text-xs text-white/50">
+                                                {config.format} • {Math.round(config.quality * 100)}% quality
+                                            </div>
+                                        </div>
+                                    </DropdownMenuItem>
+                                ))}
+                                
+                                {isFree && (
+                                    <>
+                                        <DropdownMenuSeparator className="bg-slate-700" />
+                                        <div className="px-3 py-2 text-xs text-white/50">
+                                            Free: {user?.exportsThisMonth || 0}/20 exports
+                                            <div className="text-amber-400 mt-1">
+                                                Upgrade for unlimited
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
-                    {/* Undo/Redo - Fixed on left */}
-                    <div className="flex items-center gap-1 mr-2">
-                        <Button variant={"ghost"} size={"sm"} className="text-white p-2">
-                            <RotateCcw className="h-4 w-4" />
-                        </Button>
-                        <Button variant={"ghost"} size={"sm"} className="text-white p-2">
-                            <RotateCw className="h-4 w-4" />
-                        </Button>
+                        {isFree && (
+                            <div className="px-3 py-2 text-xs text-white/50">
+                                Free Plan: {user?.exportsThisMonth || 0}/20 exports this month
+                                <div className="text-amber-400 mt-1">
+                                    Upgrade to Pro for unlimited exports
+                                </div>
+                            </div>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            {/* Bottom Row - Undo/Redo and Tools */}
+            <div className="flex items-center gap-2">
+
+                {/* Horizontal Scrolling Tools */}
+                <div className="flex-1 overflow-x-auto">
+                    <div className="flex items-center gap-1 pb-1" style={{minWidth: 'max-content'}}>
+                        {TOOLS.map((tool) => {
+                            const Icon = tool.icon;
+                            const isActive = activeTool === tool.id;
+                            const hasToolAccess = hasAccess(tool.id as PremiumTool);
+
+                            return (
+                                <Button 
+                                    key={tool.id}
+                                    variant={isActive ? "default" : "ghost"}
+                                    size={'sm'}
+                                    onClick={() => handleToolChange(tool.id as ToolId)}
+                                    className={`gap-2 relative whitespace-nowrap flex-shrink-0 ${
+                                        isActive
+                                            ? "bg-blue-600 text-white hover:bg-blue-700"
+                                            : "text-white hover:text-gray-300 hover:bg-gray-100"
+                                        }
+                                        ${!hasToolAccess ? "opacity-60" : ""}
+                                    `}
+                                >
+                                    <Icon className="h-4 w-4" />
+                                    <span>{tool.label}</span>
+                                    {tool.proOnly && !hasToolAccess && (
+                                        <Lock className="h-3 w-3 text-amber-400" />
+                                    )}
+                                </Button>
+                            )
+                        })}
                     </div>
                 </div>
-            </div>  
+
+                {/* Undo/Redo - Fixed on left */}
+                <div className="flex items-center gap-1 mr-2">
+                    <Button variant={"ghost"} size={"sm"} className="text-white p-2">
+                        <RotateCcw className="h-4 w-4" />
+                    </Button>
+                    <Button variant={"ghost"} size={"sm"} className="text-white p-2">
+                        <RotateCw className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        </div>  
 
         {restrictedTool && <UpgradeModal
             isOpen={showUpgradeModal}
