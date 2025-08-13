@@ -8,7 +8,7 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { Project, ToolId, PremiumTool, User } from "@/types"
 import axios from "axios";
 import { FabricImage, ImageFormat, TMat2D } from "fabric";
-import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Sliders, Text, Lock, RotateCcw, RotateCw, Loader2, RefreshCcw, Save, Download, ChevronDown, FileImage, Menu, DownloadIcon } from "lucide-react";
+import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Sliders, Text, Lock, RotateCcw, RotateCw, Loader2, RefreshCcw, Save, ChevronDown, FileImage, Menu, DownloadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -91,10 +91,17 @@ const TopBar = ({project}: {project: Project}) => {
     const [isReseting, setIsReseting] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isExporting, setIsExporting] = useState<boolean>(false);
-    const [exportFormat, setExportFormat] = useState<string | null>(null);
+    const [isMainDropdownOpen, setIsMainDropdownOpen] = useState<boolean>(false);
 
     const { activeTool, onToolChange, canvasEditor } = useCanvas();
     const { hasAccess, canExport, isFree } = usePlanAccess();
+
+    // Auto-close dropdowns when operations complete
+    useEffect(() => {
+        if (!isSaving && !isReseting && !isExporting) {
+            setIsMainDropdownOpen(false);
+        }
+    }, [isSaving, isReseting, isExporting]);
 
     useEffect(() => {
         const getUser = async() => {
@@ -242,7 +249,7 @@ const TopBar = ({project}: {project: Project}) => {
         }
     }
 
-    const handleExport = (exportConfig: { format: string; quality: number; label: string; extension: string; }) => {
+    const handleExport = async(exportConfig: { format: string; quality: number; label: string; extension: string; }) => {
         if (!canvasEditor || !project) {
             toast.error("Canvas not ready for export");
             return;
@@ -255,7 +262,8 @@ const TopBar = ({project}: {project: Project}) => {
         }
 
         setIsExporting(true);
-        setExportFormat(exportConfig.format);
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         try {
             // Store current canvas state for restoration
@@ -301,14 +309,13 @@ const TopBar = ({project}: {project: Project}) => {
             toast.error("Failed to export image. Please try again.");
         } finally {
             setIsExporting(false);
-            setExportFormat(null);
         }
     };
 
   return (
     <>
             {/* Mobile/Tablet Layout */}
-        <div className="lg:hidden">
+        <div>
             {/* Top Row - Back button and Hamburger menu */}
             <div className="flex items-center justify-between mb-3">
                 <Button variant={"ghost"} size={"sm"} onClick={handleBackToDashboard} className="text-white hover:text-gray-300">
@@ -318,7 +325,14 @@ const TopBar = ({project}: {project: Project}) => {
                 <h1 className="font-extrabold uppercase text-sm sm:text-base truncate mx-2">{project.title}</h1>
 
                 {/* Hamburger Menu for Actions */}
-                <DropdownMenu open={isSaving || isReseting || isExporting ? true : undefined}>
+                <DropdownMenu 
+                    open={isMainDropdownOpen || isSaving || isReseting || isExporting} 
+                    onOpenChange={(open) => {
+                        if (!isSaving && !isReseting && !isExporting) {
+                            setIsMainDropdownOpen(open);
+                        }
+                    }}
+                >
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-white">
                             <Menu className="h-4 w-4" />
@@ -362,7 +376,7 @@ const TopBar = ({project}: {project: Project}) => {
                         </DropdownMenuItem>
                         
                         {/* Export with separate dropdown menu */}
-                        <DropdownMenu open={isExporting ? true : undefined}>
+                        <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <div 
                                     className="text-white hover:bg-slate-700 cursor-pointer flex items-center px-2 py-1.5 text-sm rounded-sm"
@@ -385,10 +399,10 @@ const TopBar = ({project}: {project: Project}) => {
                             <DropdownMenuContent 
                                 align="end" 
                                 side="right"
-                                className="w-56 mx-4 bg-slate-800 border-slate-700"
+                                className="w-56 m-4 bg-slate-800 border-slate-700"
                             >
                                 <div className="px-3 py-2 text-sm text-white/70 border-b border-slate-700">
-                                    Export Resolution: {project.width} × {project.height}px
+                                    Export Resolution: {project.width} x {project.height}px
                                 </div>
                                 
                                 {EXPORT_FORMATS.map((config, index) => (
