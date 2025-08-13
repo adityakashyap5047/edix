@@ -59,6 +59,9 @@ const TextControls = ({project}: {project: Project}) => {
     const [fontSize, setFontSize] = useState(FONT_SIZES.default);
     const [textColor, setTextColor] = useState("#000000");
     const [textAlign, setTextAlign] = useState("left");
+    const [fontWeight, setFontWeight] = useState<"normal" | "bold">("normal");
+    const [fontStyle, setFontStyle] = useState<"normal" | "italic">("normal");
+    const [underline, setUnderline] = useState(false);
     const [, setChanged] = useState(0);
 
     const updateSelectedText = useCallback(() => { 
@@ -73,6 +76,9 @@ const TextControls = ({project}: {project: Project}) => {
             setFontSize(textObj.fontSize || FONT_SIZES.default);
             setTextColor(typeof textObj.fill === "string" ? textObj.fill : "#000000");
             setTextAlign(textObj.textAlign || "left");
+            setFontWeight((textObj.fontWeight === "bold" || textObj.fontWeight === 700) ? "bold" : "normal");
+            setFontStyle(textObj.fontStyle === "italic" ? "italic" : "normal");
+            setUnderline(textObj.underline || false);
         } else {
             setSelectedText(null);
         }
@@ -108,8 +114,12 @@ const TextControls = ({project}: {project: Project}) => {
             originY: "center",
 
             fontFamily,
+            fontSize,
             fill: textColor,
             textAlign,
+            fontWeight,
+            fontStyle,
+            underline,
             editable: true,
             selectable: true
         });
@@ -122,7 +132,7 @@ const TextControls = ({project}: {project: Project}) => {
             text.enterEditing();
             text.selectAll();
         }, 100);
-    }, [canvasEditor, fontFamily, textColor, textAlign]);
+    }, [canvasEditor, fontFamily, fontSize, textColor, textAlign, fontWeight, fontStyle, underline]);
 
     const hasTextOnCanvas = useCallback(() => {
         if (!canvasEditor) return false;
@@ -139,16 +149,16 @@ const TextControls = ({project}: {project: Project}) => {
     }, [canvasEditor]);
 
     useLayoutEffect(() => {
-        if (!hasTextOnCanvas()) {
-            addText();
-        } else {
+        // Only auto-select the latest text if there is text on canvas
+        // Don't automatically add text - let user click "Add Text" button
+        if (hasTextOnCanvas()) {
             const latestText = getLatestTextObject();
             if (latestText && canvasEditor) {
                 canvasEditor.setActiveObject(latestText);
                 canvasEditor.requestRenderAll();
             }
         }
-    }, [addText, hasTextOnCanvas, getLatestTextObject, canvasEditor]);
+    }, [hasTextOnCanvas, getLatestTextObject, canvasEditor]);
 
     if (!canvasEditor) {
         return <div className="p-4">
@@ -218,6 +228,8 @@ const TextControls = ({project}: {project: Project}) => {
         canvasEditor.remove(selectedText);
         canvasEditor.requestRenderAll();
         setSelectedText(null);
+        // Keep text editing mode active - don't switch tools
+        // The current font settings are preserved for next text addition
     };
 
     const handleTextReset = () => {
@@ -235,6 +247,15 @@ const TextControls = ({project}: {project: Project}) => {
 
         canvasEditor.discardActiveObject();
         setSelectedText(null);
+        
+        // Reset all configuration to defaults
+        setFontFamily("Arial");
+        setFontSize(FONT_SIZES.default);
+        setTextColor("#000000");
+        setTextAlign("left");
+        setFontWeight("normal");
+        setFontStyle("normal");
+        setUnderline(false);
         
         canvasEditor.requestRenderAll();
     }
@@ -258,139 +279,178 @@ const TextControls = ({project}: {project: Project}) => {
                 <Type className='h-4 w-4 mr-2' />
                 Add Text
             </Button>
+            
+            {/* Current Configuration Preview */}
+            {!selectedText && (
+                <div className="bg-slate-700/30 rounded-lg p-3">
+                    <p className="text-xs text-white/70 mb-2">
+                        <strong>Current Text Style:</strong>
+                    </p>
+                    <div className="text-xs text-white/60 space-y-1">
+                        <div>Font: <span className="text-white/80">{fontFamily}</span></div>
+                        <div>Size: <span className="text-white/80">{fontSize}px</span></div>
+                        <div>Color: <span className="text-white/80">{textColor}</span></div>
+                        <div>Align: <span className="text-white/80 capitalize">{textAlign}</span></div>
+                        <div>Format: <span className="text-white/80">
+                            {fontWeight === "bold" && "Bold "}
+                            {fontStyle === "italic" && "Italic "}
+                            {underline && "Underline "}
+                            {fontWeight === "normal" && fontStyle === "normal" && !underline && "Normal"}
+                        </span></div>
+                    </div>
+                </div>
+            )}
         </div>
 
-        {selectedText && (
-            <div className="border-t border-white/10 pt-6">
-                <h3 className="text-sm text-center font-bold text-gray-500 mb-4">
-                    Edit Selected Text
-                </h3>
+        {/* Text Configuration Section - Always Visible */}
+        <div className="border-t border-white/10 pt-6">
+            <h3 className="text-sm font-medium text-white mb-4">
+                {selectedText ? "Edit Selected Text" : "Text Configuration"}
+            </h3>
+            <p className="text-xs text-white/60 mb-4">
+                {selectedText 
+                    ? "Modify the currently selected text" 
+                    : "Set up font styles for new text"
+                }
+            </p>
 
-                <div className="space-y-2 mb-4">
-                    <label className="text-xs text-white/70">Font Family</label>
-                    <Select value={fontFamily} onValueChange={applyFontFamily}>
-                        <SelectTrigger className='w-full cursor-pointer !bg-slate-700'>
-                            <SelectValue placeholder="Select a font" />
-                        </SelectTrigger>
-                        <SelectContent className='!bg-slate-700'>
-                            {FONT_FAMILIES.map((font) => (
-                                <SelectItem 
-                                    className='cursor-pointer hover:!bg-slate-600 focus:!bg-slate-600 data-[highlighted]:!bg-slate-600 data-[state=checked]:!bg-slate-900' 
-                                    key={font} 
-                                    value={font}
-                                >
-                                    {font}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                    <div className="flex justify-between items-center">
-                    <label className="text-xs text-white/70">Font Size</label>
-                    <span className="text-xs text-white/70">{fontSize}px</span>
-                    </div>
-                    <Slider
-                    value={[fontSize]}
-                    onValueChange={applyFontSize}
-                    min={FONT_SIZES.min}
-                    max={FONT_SIZES.max}
-                    step={1}
-                    className="w-full"
-                    />
-                </div>
-
-                <div className="space-y-2 mb-4">
-                    <label className="text-xs text-white/70">Text Alignment</label>
-                    <div className="grid grid-cols-4 gap-1">
-                        {[
-                            ["left", AlignLeft],
-                            ["center", AlignCenter],
-                            ["right", AlignRight],
-                            ["justify", AlignJustify],
-                        ].map(([align, Icon], idx) => (
-                            <Button
-                                key={idx}
-                                onClick={() => applyTextAlign(align as string)}
-                                variant={textAlign === align ? "default" : "outline"}
-                                size="sm"
-                                className="p-2"
+            <div className="space-y-2 mb-4">
+                <label className="text-xs text-white/70">Font Family</label>
+                <Select value={fontFamily} onValueChange={selectedText ? applyFontFamily : setFontFamily}>
+                    <SelectTrigger className='w-full cursor-pointer !bg-slate-700'>
+                        <SelectValue placeholder="Select a font" />
+                    </SelectTrigger>
+                    <SelectContent className='!bg-slate-700'>
+                        {FONT_FAMILIES.map((font) => (
+                            <SelectItem 
+                                className='cursor-pointer hover:!bg-slate-600 focus:!bg-slate-600 data-[highlighted]:!bg-slate-600 data-[state=checked]:!bg-slate-900' 
+                                key={font} 
+                                value={font}
                             >
-                            <Icon className="h-4 w-4" />
-                            </Button>
+                                {font}
+                            </SelectItem>
                         ))}
-                    </div>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                    <label className="text-xs text-white/70">Text Color</label>
-                    <div className="flex gap-2">
-                    <input
-                        type="color"
-                        value={textColor}
-                        onChange={(e) => applyTextColor(e.target.value)}
-                        className="w-10 h-10 rounded border border-white/20 bg-transparent cursor-pointer"
-                    />
-                    <Input
-                        value={textColor}
-                        onChange={(e) => applyTextColor(e.target.value)}
-                        placeholder="#000000"
-                        className="flex-1 bg-slate-700 border-white/20 text-white text-sm"
-                    />
-                    </div>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                    <label className="text-xs text-white/70">Formatting</label>
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={() => toggleFormat("bold")}
-                            variant={
-                            selectedText.fontWeight === "bold" ? "default" : "outline"
-                            }
-                            size="sm"
-                            className="flex-1"
-                        >
-                            <Bold className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            onClick={() => toggleFormat("italic")}
-                            variant={
-                            selectedText.fontStyle === "italic" ? "default" : "outline"
-                            }
-                            size="sm"
-                            className="flex-1"
-                        >
-                            <Italic className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            onClick={() => toggleFormat("underline")}
-                            variant={selectedText.underline ? "default" : "outline"}
-                            size="sm"
-                            className="flex-1"
-                        >
-                            <Underline className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-
-                <Button
-                    onClick={deleteSelectedText}
-                    variant="outline"
-                    className="w-full text-red-400 border-red-400/20 hover:bg-red-400/10"
-                >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Text
-                </Button>
+                    </SelectContent>
+                </Select>
             </div>
-        )}
+
+            <div className="space-y-2 mb-4">
+                <div className="flex justify-between items-center">
+                <label className="text-xs text-white/70">Font Size</label>
+                <span className="text-xs text-white/70">{fontSize}px</span>
+                </div>
+                <Slider
+                value={[fontSize]}
+                onValueChange={selectedText ? applyFontSize : (value) => setFontSize(value[0])}
+                min={FONT_SIZES.min}
+                max={FONT_SIZES.max}
+                step={1}
+                className="w-full"
+                />
+            </div>
+
+            <div className="space-y-2 mb-4">
+                <label className="text-xs text-white/70">Text Alignment</label>
+                <div className="grid grid-cols-4 gap-1">
+                    {[
+                        ["left", AlignLeft],
+                        ["center", AlignCenter],
+                        ["right", AlignRight],
+                        ["justify", AlignJustify],
+                    ].map(([align, Icon], idx) => (
+                        <Button
+                            key={idx}
+                            onClick={() => selectedText ? applyTextAlign(align as string) : setTextAlign(align as string)}
+                            variant={textAlign === align ? "default" : "outline"}
+                            size="sm"
+                            className="p-2"
+                        >
+                        <Icon className="h-4 w-4" />
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+                <label className="text-xs text-white/70">Text Color</label>
+                <div className="flex gap-2">
+                <input
+                    type="color"
+                    value={textColor}
+                    onChange={(e) => selectedText ? applyTextColor(e.target.value) : setTextColor(e.target.value)}
+                    className="w-10 h-10 rounded border border-white/20 bg-transparent cursor-pointer"
+                />
+                <Input
+                    value={textColor}
+                    onChange={(e) => selectedText ? applyTextColor(e.target.value) : setTextColor(e.target.value)}
+                    placeholder="#000000"
+                    className="flex-1 bg-slate-700 border-white/20 text-white text-sm"
+                />
+                </div>
+            </div>
+
+            {/* Formatting Section - Always Visible */}
+            <div className="space-y-2 mb-4">
+                <label className="text-xs text-white/70">Formatting</label>
+                <div className="flex gap-2">
+                    <Button
+                        onClick={() => selectedText ? toggleFormat("bold") : setFontWeight(fontWeight === "bold" ? "normal" : "bold")}
+                        variant={
+                        selectedText 
+                            ? (selectedText.fontWeight === "bold" ? "default" : "outline")
+                            : (fontWeight === "bold" ? "default" : "outline")
+                        }
+                        size="sm"
+                        className="flex-1"
+                    >
+                        <Bold className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        onClick={() => selectedText ? toggleFormat("italic") : setFontStyle(fontStyle === "italic" ? "normal" : "italic")}
+                        variant={
+                        selectedText 
+                            ? (selectedText.fontStyle === "italic" ? "default" : "outline")
+                            : (fontStyle === "italic" ? "default" : "outline")
+                        }
+                        size="sm"
+                        className="flex-1"
+                    >
+                        <Italic className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        onClick={() => selectedText ? toggleFormat("underline") : setUnderline(!underline)}
+                        variant={
+                        selectedText 
+                            ? (selectedText.underline ? "default" : "outline")
+                            : (underline ? "default" : "outline")
+                        }
+                        size="sm"
+                        className="flex-1"
+                    >
+                        <Underline className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+
+            {/* Delete Button - Always Visible but Disabled when no text */}
+            <Button
+                onClick={deleteSelectedText}
+                variant="outline"
+                className="w-full text-red-400 border-red-400/20 hover:bg-red-400/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!selectedText}
+            >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Text
+            </Button>
+        </div>
 
         <div className="bg-slate-700/30 rounded-lg p-3">
             <p className="text-xs text-white/70">
-            <strong>Double-click</strong> any text to edit it directly on canvas.
+            <strong>Configure</strong> your text style above, then click <strong>Add Text</strong>.
             <br />
-            <strong>Select</strong> text to see formatting options here.
+            <strong>Select</strong> text on canvas to format it or delete it.
+            <br />
+            <strong>Reset</strong> clears all text and resets configuration.
             </p>
         </div>
     </div>
