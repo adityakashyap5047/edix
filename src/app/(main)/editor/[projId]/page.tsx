@@ -12,6 +12,7 @@ import CanvasEditor from "../_components/CanvasEditor";
 import { Canvas } from "fabric";
 import EditorTopBar from "../_components/EditorTopBar";
 import EditorSideBar from "../_components/EditorSideBar";
+import EditorPage from "../_components/app/EditorPage";
 
 const Page = () => {
 
@@ -95,6 +96,7 @@ const Page = () => {
                 </p>
             </div>
         </div>
+        <EditorPage project={project} />
         <div className="hidden lg:block min-h-main bg-slate-900">
             <div className="flex flex-col h-screen">
                 {processingMessage && (
