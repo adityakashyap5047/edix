@@ -592,96 +592,90 @@ const CropContent = ({project}: {project: Project}) => {
   return (
     <div className="space-y-6">
       {loading && <BarLoader width={"100%"} color="#00bcd4" />}
-      { getActiveImage() && (
-        <div className="flex gap-2 justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
-          <div>
-            <p className="text-cyan-400 text-sm font-medium">
-              ✂️ Crop Mode Active
-            </p>
-            <p className="text-cyan-300/80 text-xs mt-1">
-              {isCropMode ? "Adjust the blue rectangle to set crop area" : "Crop area not set"}
-            </p>
-          </div>
-          <Button disabled={loading} variant={"glass"} size={"sm"} onClick={handleCropReset} className='text-white/70 hover:text-white'>
-            <RotateCcw className='h-4 w-4 mr-2' />
-            Reset
-          </Button>
-        </div>
-      )}
-
-      {/* Show aspect ratios when there's an image available, regardless of crop mode */}
-      {getActiveImage() && (
+      <div className="flex gap-2 justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3">
         <div>
-          <h3 className="text-sm font-medium text-white mb-3">
-            {isCropMode ? "Crop Aspect Ratios" : "Select Crop Aspect Ratio"}
-          </h3>
-          <div className="grid grid-cols-3 gap-4">
-            {ASPECT_RATIOS.map((ratio) => {
-              const Icon = ratio.icon;
-              
-              return (
-                <button 
-                  key={ratio.label}
-                  onClick={() => handleAspectRatioClick(ratio.value)}
-                  className={`cursor-pointer text-center p-3 border rounded-sm transition-color ${selectedRatio === ratio.value ? "border-cyan-400 bg-cyan-400/10": "border-white/20 hover:border-white/40 hover:bg-white/5"}`}
-                >
-                  <div>
-                    <Icon className="h-6 w-6 mx-auto mb-2 text-white" />
-                  </div>
-                  <div className="text-xs text-white">{ratio.label}</div>
-                  {ratio.ratio && (
-                    <div className="text-xs text-white/70">{ratio.ratio}</div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-       {getActiveImage() && (
-        <div className="space-y-3 pt-4 border-t border-white/10">
-          <Button disabled={!isCropMode} onClick={applyCrop} className="w-full" variant="primary">
-            <CheckCheck className="h-4 w-4 mr-2" />
-            Apply Crop
-          </Button>
-
-          <Button disabled={!isCropMode} variant="outline" onClick={() => exitCropMode()} className="w-full">
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-        </div>
-      )}
-
-      {/* Layer Controls - Show when image is selected but not in crop mode */}
-      {getActiveImage() && !isCropMode && (
-        <div className="space-y-3 pt-4 border-t border-white/10">
-          <div className="text-sm font-medium text-white mb-2">Layer Controls</div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button 
-              onClick={sendImageBehindText} 
-              variant="outline" 
-              size="sm"
-              className="text-xs"
-            >
-              <MoveDown className="h-3 w-3 mr-1" />
-              Behind Text
-            </Button>
-            <Button 
-              onClick={bringImageInFrontOfText} 
-              variant="outline" 
-              size="sm"
-              className="text-xs"
-            >
-              <MoveUp className="h-3 w-3 mr-1" />
-              Front of Text
-            </Button>
-          </div>
-          <p className="text-xs text-white/60">
-            Control whether the image appears behind or in front of text elements.
+          <p className="text-cyan-400 text-sm font-medium">
+            ✂️ Crop Mode Active
+          </p>
+          <p className="text-cyan-300/80 text-xs mt-1">
+            {isCropMode ? "Adjust the blue rectangle to set crop area" : "Crop area not set"}
           </p>
         </div>
-      )}
+        <Button disabled={loading} variant={"glass"} size={"sm"} onClick={handleCropReset} className='text-white/70 hover:text-white'>
+          <RotateCcw className='h-4 w-4 mr-2' />
+          Reset
+        </Button>
+      </div>
+
+      {/* Show aspect ratios when there's an image available, regardless of crop mode */}
+      
+      <div>
+        <h3 className="text-sm font-medium text-white mb-3">
+          {isCropMode ? "Crop Aspect Ratios" : "Select Crop Aspect Ratio"}
+        </h3>
+        <div className="grid grid-cols-3 gap-4">
+          {ASPECT_RATIOS.map((ratio) => {
+            const Icon = ratio.icon;
+            
+            return (
+              <button 
+                key={ratio.label}
+                onClick={() => handleAspectRatioClick(ratio.value)}
+                className={`cursor-pointer text-center p-3 border rounded-sm transition-color ${selectedRatio === ratio.value ? "border-cyan-400 bg-cyan-400/10": "border-white/20 hover:border-white/40 hover:bg-white/5"}`}
+              >
+                <div>
+                  <Icon className="h-6 w-6 mx-auto mb-2 text-white" />
+                </div>
+                <div className="text-xs text-white">{ratio.label}</div>
+                {ratio.ratio && (
+                  <div className="text-xs text-white/70">{ratio.ratio}</div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-3 pt-4 border-t border-white/10">
+        <Button disabled={!isCropMode} onClick={applyCrop} className="w-full" variant="primary">
+          <CheckCheck className="h-4 w-4 mr-2" />
+          Apply Crop
+        </Button>
+
+        <Button disabled={!isCropMode} variant="outline" onClick={() => exitCropMode()} className="w-full">
+          <X className="h-4 w-4 mr-2" />
+          Cancel
+        </Button>
+      </div>
+
+      {/* Layer Controls - Show when image is selected but not in crop mode */}
+   
+      <div className="space-y-3 pt-4 border-t border-white/10">
+        <div className="text-sm font-medium text-white mb-2">Layer Controls</div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button 
+            onClick={sendImageBehindText} 
+            variant="outline" 
+            size="sm"
+            className="text-xs"
+          >
+            <MoveDown className="h-3 w-3 mr-1" />
+            Behind Text
+          </Button>
+          <Button 
+            onClick={bringImageInFrontOfText} 
+            variant="outline" 
+            size="sm"
+            className="text-xs"
+          >
+            <MoveUp className="h-3 w-3 mr-1" />
+            Front of Text
+          </Button>
+        </div>
+        <p className="text-xs text-white/60">
+          Control whether the image appears behind or in front of text elements.
+        </p>
+      </div>
 
       {/* Instructions */}
       <div className="bg-slate-700/30 rounded-lg p-3">
