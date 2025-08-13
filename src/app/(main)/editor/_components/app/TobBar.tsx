@@ -314,12 +314,12 @@ const TopBar = ({project}: {project: Project}) => {
 
   return (
     <>
-            {/* Mobile/Tablet Layout */}
-        <div>
+        <div className="border-b px-6 py-3">
             {/* Top Row - Back button and Hamburger menu */}
             <div className="flex items-center justify-between mb-3">
                 <Button variant={"ghost"} size={"sm"} onClick={handleBackToDashboard} className="text-white hover:text-gray-300">
                     <ArrowLeft className="h-4 w-4" />
+                    All Projects
                 </Button>
 
                 <h1 className="font-extrabold uppercase text-sm sm:text-base truncate mx-2">{project.title}</h1>
@@ -333,7 +333,7 @@ const TopBar = ({project}: {project: Project}) => {
                         }
                     }}
                 >
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger asChild className="max-md:block hidden">
                         <Button variant="ghost" size="sm" className="text-white">
                             <Menu className="h-4 w-4" />
                         </Button>
@@ -445,13 +445,114 @@ const TopBar = ({project}: {project: Project}) => {
                         )}
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <div className="hidden md:flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetToOriginal}
+                        disabled={isReseting || !project.originalImageUrl}
+                        className="gap-2"
+                    >
+                        {isReseting ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Resetting...
+                            </>
+                        ) : (
+                            <>
+                                <RefreshCcw className="h-4 w-4" />
+                                Reset
+                            </>
+                        )}
+                    </Button>
+
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleManualSave}
+                        disabled={isSaving || !canvasEditor}
+                        className="gap-2"
+                    >
+                        {isSaving ? (
+                            <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Saving...
+                            </>
+                        ) : ( 
+                            <>
+                            <Save className="h-4 w-4" />
+                            Save
+                            </>
+                        )} 
+                    </Button>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                            variant="glass"
+                            size="sm"
+                            disabled={isExporting || !canvasEditor}
+                            className="gap-2"
+                            >
+                            {isExporting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Exporting...
+                                </>
+                            ) : (
+                                <>
+                                    <DownloadIcon className="h-4 w-4" />
+                                    Export
+                                    <ChevronDown className="h-4 w-4" />
+                                </>
+                            )}
+                            </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent
+                            align="end"
+                            className="w-56 bg-slate-800 border-slate-700"
+                        >
+                            <div className="px-3 py-2 text-sm text-white/70">
+                                Export Resolution: {project.width} × {project.height}px
+                            </div>
+
+                            <DropdownMenuSeparator className="bg-slate-700" />
+
+                            {EXPORT_FORMATS.map((config, index) => (
+                            <DropdownMenuItem
+                                key={index}
+                                onClick={() => handleExport(config)}
+                                className="text-white hover:bg-slate-700 cursor-pointer flex items-center gap-2"
+                            >
+                                <FileImage className="h-4 w-4" />
+                                <div className="flex-1">
+                                <div className="font-medium">{config.label}</div>
+                                <div className="text-xs text-white/50">
+                                    {config.format} • {Math.round(config.quality * 100)}%
+                                    quality
+                                </div>
+                                </div>
+                            </DropdownMenuItem>
+                            ))}
+
+                            {isFree && (
+                                <div className="px-3 py-2 text-xs text-white/50">
+                                    Free Plan: {user?.exportsThisMonth || 0}/20 exports this month
+                                    <div className="text-amber-400 mt-1">
+                                        Upgrade to Pro for unlimited exports
+                                    </div>
+                                </div>
+                            )} 
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
-            {/* Bottom Row - Undo/Redo and Tools */}
             <div className="flex items-center gap-2">
 
                 {/* Horizontal Scrolling Tools */}
-                <div className="flex-1 overflow-x-auto">
+                <div className="flex-1 overflow-x-auto" style={{scrollbarWidth: 'none'}}>
                     <div className="flex items-center gap-1 pb-1" style={{minWidth: 'max-content'}}>
                         {TOOLS.map((tool) => {
                             const Icon = tool.icon;

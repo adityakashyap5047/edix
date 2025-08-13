@@ -406,9 +406,6 @@ const EditorTopBar = ({project}: {project: Project}) => {
                                 </div>
                             </DropdownMenuItem>
                             ))}
-
-                            <DropdownMenuSeparator className="bg-slate-700" />
-
                             {isFree && (
                                 <div className="px-3 py-2 text-xs text-white/50">
                                     Free Plan: {user?.exportsThisMonth || 0}/20 exports this month
