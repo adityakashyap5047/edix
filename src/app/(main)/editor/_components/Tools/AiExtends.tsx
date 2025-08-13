@@ -6,7 +6,7 @@ import { useCanvas } from "@/context/Context";
 import { Project } from "@/types";
 import axios from "axios";
 import { FabricImage } from "fabric";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Wand2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, RotateCcw, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -162,17 +162,47 @@ const AiExtends = ({project}: {project: Project}) => {
         };
     }
 
+    const handleExtendReset = () => {
+        // Reset all extension configuration to default state
+        setSelectedDirection(null);
+        setExtensionAmount(200);
+        
+        // Clear any active selection on canvas
+        if (canvasEditor) {
+            canvasEditor.discardActiveObject();
+            canvasEditor.requestRenderAll();
+        }
+        
+        // Show feedback to user
+        toast.success("Extension settings reset to default");
+    };
+
     const { width: newWidth, height: newHeight } = calculateDimensions();
     const currentImage = getMainImage();
 
     return (
         <div className="space-y-6">
+            {/* Header Section */}
+            <div className='p-3 flex gap-4 bg-purple-900/20 border border-purple-500/30 rounded-sm'>
+                <div>
+                    <h4 className='text-xs font-medium text-purple-300 mb-2'>🔮 AI Image Extension</h4>
+                    <p className='text-xs text-purple-200/80'>
+                        Expand your image boundaries using artificial intelligence to seamlessly generate new content in any direction.
+                    </p>
+                </div>
+                <Button disabled={!selectedDirection} onClick={handleExtendReset} variant={"glass"} size={"sm"} className='text-white/70 hover:text-white'>
+                    <RotateCcw className='h-4 w-4 mr-2' />
+                    Reset
+                </Button>
+            </div>
+
+            {/* Direction Selection */}
             <div>
                 <h3 className="text-sm font-medium text-white mb-3">
                     Select Extension Direction
                 </h3>
-                <p className="text-xs text-white/70 mb-3">
-                    Choose one direction to extend your image
+                <p className="text-xs text-white/70 mb-4">
+                    Choose one direction to extend your image with AI-generated content
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -181,21 +211,26 @@ const AiExtends = ({project}: {project: Project}) => {
                         key={key}
                         onClick={() => selectDirection(key)}
                         variant={selectedDirection === key ? "default" : "outline"}
-                        className={`flex items-center gap-2 ${
-                            selectedDirection === key ? "bg-cyan-500 hover:bg-cyan-600" : ""
+                        className={`flex items-center gap-2 h-12 transition-all duration-200 ${
+                            selectedDirection === key 
+                                ? "bg-cyan-500 hover:bg-cyan-600 shadow-lg shadow-cyan-500/20" 
+                                : "hover:bg-white/5 border-white/20 hover:border-white/40"
                         }`}
                         >
                         <Icon className="h-4 w-4" />
-                        {label}
+                        <span className="font-medium">{label}</span>
                         </Button>
                     ))}
                 </div>
             </div>
 
+            {/* Extension Amount Control */}
             <div>
-                <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm text-white">Extension Amount</label>
-                    <span className="text-xs text-white/70">{extensionAmount}px</span>
+                <div className="flex justify-between items-center mb-3">
+                    <label className="text-sm font-medium text-white">Extension Amount</label>
+                    <span className="text-xs text-cyan-400 font-mono bg-cyan-500/10 px-2 py-1 rounded">
+                        {extensionAmount}px
+                    </span>
                 </div>
                 <Slider
                     value={[extensionAmount]}
@@ -203,52 +238,113 @@ const AiExtends = ({project}: {project: Project}) => {
                     min={50}
                     max={500}
                     step={25}
-                    className="w-full cursor-pointerf"
+                    className="w-full cursor-pointer"
                     disabled={!selectedDirection}
                 />
+                <div className="flex justify-between text-xs text-white/50 mt-1">
+                    <span>50px</span>
+                    <span>500px</span>
+                </div>
+                {!selectedDirection && (
+                    <p className="text-xs text-white/40 mt-2 italic">
+                        Select a direction to enable extension amount control
+                    </p>
+                )}
             </div>
 
+            {/* Extension Preview */}
             {selectedDirection && (
-                <div className="bg-slate-700/30 rounded-lg p-3">
-                    <h4 className="text-sm font-medium text-white mb-2">
-                        Extension Preview
-                    </h4>
-                <div className="text-xs text-white/70 space-y-1">
-                    <div>
-                        Current:{" "}
-                        {Math.round(currentImage!.width * (currentImage!.scaleX || 1))} ×{" "}
-                        {Math.round(currentImage!.height * (currentImage!.scaleY || 1))}px
+                <div className='p-3 bg-blue-900/20 border border-blue-500/30 rounded-sm'>
+                    <h4 className='text-xs font-medium text-blue-300 mb-3'>📐 Extension Preview</h4>
+                    <div className='grid grid-cols-2 gap-3 text-xs text-blue-200/80'>
+                        <div className='flex justify-between'>
+                            <span>Current Size:</span>
+                            <span className='font-mono text-blue-200'>
+                                {Math.round(currentImage!.width * (currentImage!.scaleX || 1))} × {Math.round(currentImage!.height * (currentImage!.scaleY || 1))}px
+                            </span>
                         </div>
-                        <div className="text-cyan-400">
-                        Extended: {newWidth} × {newHeight}px
+                        <div className='flex justify-between'>
+                            <span>Extended Size:</span>
+                            <span className='font-mono text-cyan-300 font-medium'>
+                                {newWidth} × {newHeight}px
+                            </span>
                         </div>
-                        <div className="text-white/50">
-                        Canvas: {project.width} × {project.height}px (unchanged)
+                        <div className='flex justify-between'>
+                            <span>Direction:</span>
+                            <span className='font-mono text-blue-200 capitalize'>
+                                {DIRECTIONS.find((d) => d.key === selectedDirection)?.label}
+                            </span>
                         </div>
-                        <div className="text-cyan-300">
-                        Direction:{" "}
-                        {DIRECTIONS.find((d) => d.key === selectedDirection)?.label}
+                        <div className='flex justify-between'>
+                            <span>Extension:</span>
+                            <span className='font-mono text-purple-300'>
+                                +{extensionAmount}px
+                            </span>
                         </div>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-blue-500/20">
+                        <p className="text-xs text-blue-300/70">
+                            Canvas size ({project.width} × {project.height}px) remains unchanged
+                        </p>
                     </div>
                 </div>
             )}
 
+            {/* Apply Button */}
             <Button
                 onClick={applyExtension}
                 disabled={!selectedDirection}
-                className="w-full hover:!scale-101"
+                className="w-full hover:!scale-101 h-12 font-medium transition-all duration-200"
                 variant="primary"
             >
-                <Wand2 className="h-4 w-4 mr-2" />
+                <Wand2 className="h-5 w-5 mr-2" />
                 Apply AI Extension
             </Button>
 
-            <div className="bg-slate-700/30 rounded-lg p-3">
-                <p className="text-xs text-white/70">
-                    <strong>How it works:</strong> Select one direction → Set amount →
-                    Apply extension. AI will intelligently fill the new area in that
-                    direction.
-                </p>
+            {/* Pro Tips Section */}
+            <div className='p-3 bg-emerald-900/20 border border-emerald-500/30 rounded-sm'>
+                <h4 className='text-xs font-medium text-emerald-300 mb-3'>💡 Pro Tips</h4>
+                <div className='space-y-2 text-xs text-emerald-200/80'>
+                    <div className='flex items-start gap-2'>
+                        <span className='text-emerald-400 font-bold'>•</span>
+                        <span><strong className='text-emerald-200'>Best Results:</strong> Use high-resolution images for better AI generation quality</span>
+                    </div>
+                    <div className='flex items-start gap-2'>
+                        <span className='text-emerald-400 font-bold'>•</span>
+                        <span><strong className='text-emerald-200'>Multiple Extensions:</strong> You can extend multiple directions sequentially</span>
+                    </div>
+                    <div className='flex items-start gap-2'>
+                        <span className='text-emerald-400 font-bold'>•</span>
+                        <span><strong className='text-emerald-200'>Background Removal:</strong> Apply extensions before removing backgrounds</span>
+                    </div>
+                    <div className='flex items-start gap-2'>
+                        <span className='text-emerald-400 font-bold'>•</span>
+                        <span><strong className='text-emerald-200'>Processing Time:</strong> Larger extensions may take longer to process</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* How It Works Section */}
+            <div className="p-3 bg-slate-700/30 border border-slate-500/30 rounded-sm">
+                <h4 className="text-xs font-medium text-slate-300 mb-3">⚙️ How AI Extension Works</h4>
+                <div className="space-y-2 text-xs text-slate-400">
+                    <div className="flex items-start gap-2">
+                        <span className="text-cyan-400 font-bold">1.</span>
+                        <span>AI analyzes your image content and edges</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <span className="text-cyan-400 font-bold">2.</span>
+                        <span>Generates seamless content in the selected direction</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <span className="text-cyan-400 font-bold">3.</span>
+                        <span>Blends new content naturally with existing image</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <span className="text-cyan-400 font-bold">4.</span>
+                        <span>Auto-saves the extended image to your project</span>
+                    </div>
+                </div>
             </div>
         </div>
     )
