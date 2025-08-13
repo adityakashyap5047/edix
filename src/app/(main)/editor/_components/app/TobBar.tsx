@@ -305,13 +305,8 @@ const TopBar = ({project}: {project: Project}) => {
         }
     };
 
-    const handleExportMenu = () => {
-        console.log("Exporting...");
-    }
-
   return (
     <>
-        <div className="border-b px-3 sm:px-6 py-3">
             {/* Mobile/Tablet Layout */}
             <div className="lg:hidden">
                 {/* Top Row - Back button and Hamburger menu */}
@@ -366,23 +361,66 @@ const TopBar = ({project}: {project: Project}) => {
                                 )}
                             </DropdownMenuItem>
                             
-                            <DropdownMenuItem 
-                                onClick={handleExportMenu}
-                                disabled={isExporting || !canvasEditor}
-                                className="text-white hover:bg-slate-700 cursor-pointer"
-                            >
-                                {isExporting ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                        Exporting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <DownloadIcon className="h-4 w-4 mr-2" />
-                                        Export
-                                    </>
-                                )}
-                            </DropdownMenuItem>
+                            {/* Export with separate dropdown menu */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <div 
+                                        className="text-white hover:bg-slate-700 cursor-pointer flex items-center px-2 py-1.5 text-sm rounded-sm"
+                                    >
+                                        {isExporting ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                Exporting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <DownloadIcon className="h-4 w-4 mr-2" />
+                                                Export
+                                                <ChevronDown className="h-3 w-3 ml-auto" />
+                                            </>
+                                        )}
+                                    </div>
+                                </DropdownMenuTrigger>
+                                
+                                <DropdownMenuContent 
+                                    align="end" 
+                                    side="right"
+                                    className="w-56 bg-slate-800 border-slate-700"
+                                >
+                                    <div className="px-3 py-2 text-sm text-white/70 border-b border-slate-700">
+                                        Export Resolution: {project.width} × {project.height}px
+                                    </div>
+                                    
+                                    {EXPORT_FORMATS.map((config, index) => (
+                                        <DropdownMenuItem
+                                            key={index}
+                                            onClick={() => handleExport(config)}
+                                            className="text-white hover:bg-slate-700 cursor-pointer flex items-center gap-2"
+                                        >
+                                            <FileImage className="h-4 w-4" />
+                                            <div className="flex-1">
+                                                <div className="font-medium text-sm">{config.label}</div>
+                                                <div className="text-xs text-white/50">
+                                                    {config.format} • {Math.round(config.quality * 100)}% quality
+                                                </div>
+                                            </div>
+                                        </DropdownMenuItem>
+                                    ))}
+                                    
+                                    {isFree && (
+                                        <>
+                                            <DropdownMenuSeparator className="bg-slate-700" />
+                                            <div className="px-3 py-2 text-xs text-white/50">
+                                                Free: {user?.exportsThisMonth || 0}/20 exports
+                                                <div className="text-amber-400 mt-1">
+                                                    Upgrade for unlimited
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
                             {isFree && (
                                 <div className="px-3 py-2 text-xs text-white/50">
                                     Free Plan: {user?.exportsThisMonth || 0}/20 exports this month
@@ -441,8 +479,7 @@ const TopBar = ({project}: {project: Project}) => {
                         </Button>
                     </div>
                 </div>
-            </div>            
-        </div>
+            </div>  
 
         {restrictedTool && <UpgradeModal
             isOpen={showUpgradeModal}
@@ -462,21 +499,3 @@ const TopBar = ({project}: {project: Project}) => {
 }
 
 export default TopBar
-
-// {EXPORT_FORMATS.map((config, index) => (
-//                                 <DropdownMenuItem
-//                                     key={index}
-//                                     onClick={() => handleExport(config)}
-//                                     className="text-white hover:bg-slate-700 cursor-pointer"
-//                                 >
-//                                     <FileImage className="h-4 w-4 mr-2" />
-//                                     <div>
-//                                         <div className="font-medium text-xs">{config.label}</div>
-//                                         <div className="text-xs text-white/50">
-//                                             {config.format} • {Math.round(config.quality * 100)}%
-//                                         </div>
-//                                     </div>
-//                                 </DropdownMenuItem>
-//                             ))}
-
-//                             <DropdownMenuSeparator className="bg-slate-700" />
