@@ -282,21 +282,34 @@ const TextControls = ({project}: {project: Project}) => {
             
             {/* Current Configuration Preview */}
             {!selectedText && (
-                <div className="bg-slate-700/30 rounded-lg p-3">
-                    <p className="text-xs text-white/70 mb-2">
-                        <strong>Current Text Style:</strong>
-                    </p>
-                    <div className="text-xs text-white/60 space-y-1">
-                        <div>Font: <span className="text-white/80">{fontFamily}</span></div>
-                        <div>Size: <span className="text-white/80">{fontSize}px</span></div>
-                        <div>Color: <span className="text-white/80">{textColor}</span></div>
-                        <div>Align: <span className="text-white/80 capitalize">{textAlign}</span></div>
-                        <div>Format: <span className="text-white/80">
-                            {fontWeight === "bold" && "Bold "}
-                            {fontStyle === "italic" && "Italic "}
-                            {underline && "Underline "}
-                            {fontWeight === "normal" && fontStyle === "normal" && !underline && "Normal"}
-                        </span></div>
+                <div className='p-3 bg-blue-900/20 border border-blue-500/30 rounded-sm'>
+                    <h4 className='text-xs font-medium text-blue-300 mb-2'>ℹ️ Current Text Style</h4>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-blue-200/80'>
+                        <div className='flex gap-4'>
+                            <span>Font:</span>
+                            <span className='font-mono text-blue-200'>{fontFamily}</span>
+                        </div>
+                        <div className='flex gap-4'>
+                            <span>Size:</span>
+                            <span className='font-mono text-blue-200'>{fontSize}px</span>
+                        </div>
+                        <div className='flex gap-4'>
+                            <span>Color:</span>
+                            <span className='font-mono text-blue-200'>{textColor}</span>
+                        </div>
+                        <div className='flex gap-4'>
+                            <span>Align:</span>
+                            <span className='font-mono text-blue-200 capitalize'>{textAlign}</span>
+                        </div>
+                        <div className='col-span-2 flex gap-4'>
+                            <span>Format:</span>
+                            <span className='font-mono text-blue-200'>
+                                {fontWeight === "bold" && "Bold "}
+                                {fontStyle === "italic" && "Italic "}
+                                {underline && "Underline "}
+                                {fontWeight === "normal" && fontStyle === "normal" && !underline && "Normal"}
+                            </span>
+                        </div>
                     </div>
                 </div>
             )}
@@ -345,7 +358,7 @@ const TextControls = ({project}: {project: Project}) => {
                 min={FONT_SIZES.min}
                 max={FONT_SIZES.max}
                 step={1}
-                className="w-full"
+                className="w-full cursor-pointer"
                 />
             </div>
 
