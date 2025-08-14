@@ -397,8 +397,6 @@ const TopBar = ({project}: {project: Project}) => {
                             </DropdownMenuTrigger>
                             
                             <DropdownMenuContent 
-                                align="end" 
-                                side="right"
                                 className="w-56 m-4 bg-slate-800 border-slate-700"
                             >
                                 <div className="px-3 py-2 text-sm text-white/70 border-b border-slate-700">
