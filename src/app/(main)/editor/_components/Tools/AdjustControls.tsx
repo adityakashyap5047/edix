@@ -226,7 +226,7 @@ const AdjustControls = ({}: {project: Project}) => {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const imageObj = imageObject as any;
-        if (imageObj.filters) {
+        if (imageObj?.filters) {
             const existingValues = extractFilterValues(imageObj);
             setFilterValues(existingValues);
         }

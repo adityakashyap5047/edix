@@ -18,8 +18,17 @@ const Editor = ({project}: {project: Project}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasWrapperRef = useRef<HTMLDivElement>(null);
+    const isMountedRef = useRef<boolean>(true);
 
     const { canvasEditor, setCanvasEditor, activeTool, onToolChange } = useCanvas();
+
+    // Track component mount status
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     const canvasScale = 100;
 
@@ -180,21 +189,36 @@ const Editor = ({project}: {project: Project}) => {
         newWidth = Math.max(minSize, Math.min(newWidth, maxWidth));
         newHeight = Math.max(minSize, Math.min(newHeight, maxHeight));
         
-        // Update canvas dimensions
-        canvasEditor.setDimensions({
-            width: newWidth,
-            height: newHeight,
-        });
+        // Check if canvas is properly initialized before updating dimensions
+        if (!canvasEditor || !isMountedRef.current) return;
         
-        // Re-center all objects during resize
-        const objects = canvasEditor.getObjects();
-        objects.forEach(obj => {
-            // Maintain relative position during resize, don't force center
-            canvasEditor.centerObject(obj);
-        });
-        
-        canvasEditor.calcOffset();
-        canvasEditor.requestRenderAll();
+        // Additional checks for canvas internal state
+        try {
+            if (!canvasEditor.getElement() || canvasEditor.disposed) return;
+        } catch (error) {
+            console.error('Canvas element check failed in mouse move:', error);
+            return;
+        }
+
+        try {
+            // Update canvas dimensions
+            canvasEditor.setDimensions({
+                width: newWidth,
+                height: newHeight,
+            });
+            
+            // Re-center all objects during resize
+            const objects = canvasEditor.getObjects();
+            objects.forEach(obj => {
+                // Maintain relative position during resize, don't force center
+                canvasEditor.centerObject(obj);
+            });
+            
+            canvasEditor.calcOffset();
+            canvasEditor.requestRenderAll();
+        } catch (error) {
+            console.error('Error during canvas resize:', error);
+        }
     }, [isResizing, resizeDirection, canvasEditor, dragStart]);
 
     const handleMouseUp = useCallback(() => {
@@ -227,21 +251,37 @@ const Editor = ({project}: {project: Project}) => {
     useEffect(() => {
         if (!canvasEditor || !project) return;
 
-        // Recalculate dimensions with new scale
-        const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
+        // Check if canvas is properly initialized and not disposed
+        if (!canvasEditor || !isMountedRef.current) return;
+        
+        // Additional checks for canvas internal state
+        try {
+            if (!canvasEditor.getElement() || canvasEditor.disposed) return;
+        } catch (error) {
+            console.error('Canvas element check failed:', error);
+            return;
+        }
 
-        // Update canvas dimensions
-        canvasEditor.setDimensions({
-            width: canvasWidth,
-            height: canvasHeight,
-        }, {
-            backstoreOnly: false
-        });
+        try {
+            // Recalculate dimensions with new scale
+            const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
 
-        canvasEditor.setZoom(scale);
-        canvasEditor.calcOffset();
-        canvasEditor.requestRenderAll();
-    }, [canvasScale, canvasEditor, project, calculateCanvasDimensions]);
+            // Update canvas dimensions
+            canvasEditor.setDimensions({
+                width: canvasWidth,
+                height: canvasHeight,
+            }, {
+                backstoreOnly: false
+            });
+
+            canvasEditor.setZoom(scale);
+            canvasEditor.calcOffset();
+            canvasEditor.requestRenderAll();
+        } catch (error) {
+            console.error('Error updating canvas dimensions:', error);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canvasScale, canvasEditor, project]);
 
     const savedCanvasState = useCallback(async () => {
         if (!canvasEditor || !project) {
@@ -274,45 +314,60 @@ const Editor = ({project}: {project: Project}) => {
         const handleResize = () => {
             if (!canvasEditor || !project || !containerRef.current || isResizing) return;
 
+            // Check if canvas is properly initialized and not disposed
+            if (!canvasEditor || !isMountedRef.current) return;
+            
+            // Additional checks for canvas internal state
+            try {
+                if (!canvasEditor.getElement() || canvasEditor.disposed) return;
+            } catch (error) {
+                console.error('Canvas element check failed in resize:', error);
+                return;
+            }
+
             isResizing = true;
 
             // Simple resize without animation frames
             setTimeout(() => {
                 const container = containerRef.current;
-                if (!container) {
+                if (!container || !canvasEditor || canvasEditor.disposed || !isMountedRef.current) {
                     isResizing = false;
                     return;
                 }
 
-                // Get current canvas state
-                const currentDimensions = {
-                    width: canvasEditor.getWidth(),
-                    height: canvasEditor.getHeight()
-                };
-                const currentZoom = canvasEditor.getZoom();
+                try {
+                    // Get current canvas state
+                    const currentDimensions = {
+                        width: canvasEditor.getWidth(),
+                        height: canvasEditor.getHeight()
+                    };
+                    const currentZoom = canvasEditor.getZoom();
 
-                // Recalculate optimal dimensions
-                const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
+                    // Recalculate optimal dimensions
+                    const { canvasWidth, canvasHeight, scale } = calculateCanvasDimensions();
 
-                // Only update if width changed significantly (ignore small height changes)
-                const widthDiff = Math.abs(currentDimensions.width - canvasWidth);
-                const scaleDiff = Math.abs(currentZoom - scale);
+                    // Only update if width changed significantly (ignore small height changes)
+                    const widthDiff = Math.abs(currentDimensions.width - canvasWidth);
+                    const scaleDiff = Math.abs(currentZoom - scale);
 
-                if (widthDiff > 10 || scaleDiff > 0.05) {
-                    // Update canvas dimensions
-                    canvasEditor.setDimensions({
-                        width: canvasWidth,
-                        height: canvasHeight,
-                    }, {
-                        backstoreOnly: false
-                    });
+                    if (widthDiff > 10 || scaleDiff > 0.05) {
+                        // Update canvas dimensions
+                        canvasEditor.setDimensions({
+                            width: canvasWidth,
+                            height: canvasHeight,
+                        }, {
+                            backstoreOnly: false
+                        });
 
-                    // Apply new zoom
-                    canvasEditor.setZoom(scale);
-                    
-                    // Recalculate offsets
-                    canvasEditor.calcOffset();
-                    canvasEditor.requestRenderAll();
+                        // Apply new zoom
+                        canvasEditor.setZoom(scale);
+                        
+                        // Recalculate offsets
+                        canvasEditor.calcOffset();
+                        canvasEditor.requestRenderAll();
+                    }
+                } catch (error) {
+                    console.error('Error handling canvas resize:', error);
                 }
 
                 isResizing = false;
@@ -506,6 +561,9 @@ const Editor = ({project}: {project: Project}) => {
 
         // Cleanup function
         return () => {
+            // Mark component as unmounted
+            isMountedRef.current = false;
+            
             // Clean up the canvas instance if it exists
             if (canvasInstance) {
                 canvasInstance.dispose();
@@ -515,7 +573,7 @@ const Editor = ({project}: {project: Project}) => {
         };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [project, calculateCanvasDimensions, setCanvasEditor]);
+    }, [project, setCanvasEditor]);
 
     // Switch cursor based on active tool
     useEffect(() => {
