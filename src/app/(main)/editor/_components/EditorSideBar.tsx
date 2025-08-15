@@ -53,7 +53,7 @@ const TOOL_CONFIGS: Partial<Record<ToolId, ToolConfig>> = {
   },
 };
 
-const EditorSideBar = ({project}: {project: Project}) => {
+const EditorSideBar = ({project, width=320}: {project: Project, width?: number}) => {
 
     const { activeTool } = useCanvas();
 
@@ -66,7 +66,10 @@ const EditorSideBar = ({project}: {project: Project}) => {
     const Icon = toolConfig.icon;
 
   return (
-    <div className="w-96 border-r flex flex-col">
+    <div 
+      className="border-r flex flex-col bg-slate-900 flex-shrink-0" 
+      style={{ width: `${width}px` }}
+    >
       {/* Sidebar Header */}
       <div className="p-4 border-b">
         <div className="flex items-center gap-3">

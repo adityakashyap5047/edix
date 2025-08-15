@@ -3,7 +3,7 @@
 import { CanvasContext } from "@/context/Context";
 import { Project, ToolId } from "@/types";
 import axios, { AxiosError } from "axios";
-import { Loader2, Monitor } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RingLoader } from "react-spinners";
@@ -100,7 +100,6 @@ const Page = () => {
                     </div>
                     </div>
                 )}
-                {/* Top Bar  */}
                 <EditorTopBar project={project} />
 
                 <div className="flex flex-1 overflow-hidden">

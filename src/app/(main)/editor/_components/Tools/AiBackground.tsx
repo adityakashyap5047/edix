@@ -252,12 +252,12 @@ const AiBackground = ({project}: {project: Project}) => {
         </div>
 
         <Button
-          className="w-full hover:!scale-101"
+          className="w-full hover:!scale-101 text-sm"
           variant={"primary"}
           onClick={handleBackgroundRemoval}
           disabled={!!processingMessage || !getMainImage()}
         >
-          <Trash2 className="h-4 w-4 mr-2" />
+          <Trash2 className="h-4 w-4" />
           Remove Image Background
         </Button>
 

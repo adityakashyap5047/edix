@@ -51,20 +51,11 @@ const Editor = ({project}: {project: Project}) => {
         const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
         
         // Absolutely minimal margins to maximize canvas area
-        const margin = isMobile ? 4 : isTablet ? 6 : 8;
+        const margin = isMobile ? 8 : isTablet ? 12 : 16;
         
         // Calculate available space - use almost everything
         const maxWidth = Math.max(containerWidth - margin, 150);
         const maxHeight = Math.max(containerHeight - margin, 100);
-
-        console.log('Container dimensions:', { 
-            containerWidth, 
-            containerHeight, 
-            maxWidth, 
-            maxHeight,
-            margin,
-            isMobile 
-        });
 
         // Check if "resize" exists in activeTransformations
         const hasResizeTransformation = project.activeTransformations && 
@@ -99,25 +90,20 @@ const Editor = ({project}: {project: Project}) => {
             // If calculated width exceeds available space, use full width instead
             if (canvasWidth > maxWidth) {
                 canvasWidth = Math.floor(maxWidth * 0.95);
-                // Recalculate height based on full width
-                const adjustedHeight = Math.floor(canvasWidth / projectAspectRatio);
                 
                 return {
                     canvasWidth: canvasWidth,
-                    canvasHeight: Math.min(adjustedHeight, canvasHeight),
+                    canvasHeight: canvasHeight,
                     scale: 1
                 };
             }
             
             // Use maximum height approach
-            const result = {
+            return {
                 canvasWidth: canvasWidth,
                 canvasHeight: canvasHeight,
                 scale: 1
             };
-            
-            console.log('Final canvas dimensions:', result);
-            return result;
         }
     }, [containerRef, project]);
 
@@ -589,7 +575,7 @@ const Editor = ({project}: {project: Project}) => {
     return (
         <div 
             ref={containerRef}
-            className='relative w-full h-full overflow-hidden bg-secondary'
+            className='relative w-full h-full overflow-hidden bg-secondary p-2'
         >
             <div 
                 className='absolute inset-0 opacity-10 pointer-events-none'

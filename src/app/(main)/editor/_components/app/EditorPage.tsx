@@ -7,13 +7,16 @@ import Editor from "./Editor";
 
 const EditorPage = ({project}: {project: Project}) => {
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-        {/* Top Bar  */}
+    <div className="flex flex-col h-screen">
         <TopBar project={project} />
+        <div className="flex flex-1 overflow-hidden">
+            <div className="hidden md:block">
+              <EditorSideBar width={250} project={project} />
+            </div>
 
-        {/* Editor - Takes remaining height */}
-        <div className="flex-1 bg-slate-800 overflow-hidden">
-            <Editor project={project} />
+            <div className="flex-1 bg-slate-800">
+                <Editor project={project} />
+            </div>
         </div>
     </div>
   )
