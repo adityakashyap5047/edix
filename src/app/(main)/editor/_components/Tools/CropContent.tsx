@@ -45,6 +45,7 @@ const CropContent = ({project}: {project: Project}) => {
   const [originalProps, setOriginalProps] = useState<OriginalProps | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [pendingAspectRatio, setPendingAspectRatio] = useState<number | null>(null);
+  const [isFirstTimesEntered, setIsFirstTimesEntered] = useState<boolean>(false);
 
   const maintainLayerOrder = useCallback((newImage: FabricObject, originalIndex: number) => {
     if (!canvasEditor) return;
@@ -207,7 +208,11 @@ const CropContent = ({project}: {project: Project}) => {
   }
 
   useEffect(() => {
-    if (activeTool === "crop" && canvasEditor) { 
+    setIsFirstTimesEntered(true);
+  }, []);
+
+  useEffect(() => {
+    if (activeTool === "crop" && canvasEditor && isCropMode && isFirstTimesEntered) { 
       setLoading(true);
       const canvasState = canvasEditor.toJSON();
       const getProjectData = async () => {
@@ -226,12 +231,13 @@ const CropContent = ({project}: {project: Project}) => {
         } catch (error) {
           console.error("Error fetching project data:", error);
         } finally {
+          setIsFirstTimesEntered(false);
           setLoading(false);
         }
       };
       getProjectData();
     }
-  }, [activeTool, canvasEditor, project]);
+  }, [activeTool, canvasEditor, project, isCropMode, isFirstTimesEntered]);
 
   useEffect(() => {
     return () => {
