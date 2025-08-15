@@ -50,8 +50,8 @@ const Editor = ({project}: {project: Project}) => {
         const isMobile = window.innerWidth < 768;
         const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
         
-        // Absolutely minimal margins to maximize canvas area
-        const margin = isMobile ? 8 : isTablet ? 12 : 16;
+        // Absolutely minimal margins to maximize canvas area - reduced for mobile
+        const margin = isMobile ? 4 : isTablet ? 8 : 12;
         
         // Calculate available space - use almost everything
         const maxWidth = Math.max(containerWidth - margin, 150);

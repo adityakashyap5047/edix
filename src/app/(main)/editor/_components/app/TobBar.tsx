@@ -92,6 +92,7 @@ const TopBar = ({project}: {project: Project}) => {
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isExporting, setIsExporting] = useState<boolean>(false);
     const [isMainDropdownOpen, setIsMainDropdownOpen] = useState<boolean>(false);
+    const [screenWidth, setScreenWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1024);
 
     const { activeTool, onToolChange, canvasEditor } = useCanvas();
     const { hasAccess, canExport, isFree } = usePlanAccess();
@@ -113,6 +114,16 @@ const TopBar = ({project}: {project: Project}) => {
             }
         }
         getUser();
+    }, []);
+
+    // Track screen width for responsive button text
+    useEffect(() => {
+        const handleResize = () => {
+            setScreenWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const handleBackToDashboard = () => {
@@ -319,7 +330,7 @@ const TopBar = ({project}: {project: Project}) => {
             <div className="flex items-center justify-between mb-3">
                 <Button variant={"ghost"} size={"sm"} onClick={handleBackToDashboard} className="text-white hover:text-gray-300">
                     <ArrowLeft className="h-4 w-4" />
-                    All Projects
+                    {screenWidth > 610 && <span className="ml-2">All Projects</span>}
                 </Button>
 
                 <h1 className="font-extrabold uppercase text-sm sm:text-base truncate mx-2">{project.title}</h1>
