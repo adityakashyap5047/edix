@@ -263,10 +263,10 @@ const TextControls = ({project}: {project: Project}) => {
   return (
     <div className='space-y-6'>
         <div className="space-y-4">
-            <div className='flex gap-6 justify-center'>
+            <div className='flex gap-6 items-center justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-sm p-3'>
                 <div>
-                    <h3 className='text-sm font-medium text-white mb-2'>Add Text</h3>
-                    <p className="text-xs text-white/70 mb-4">
+                    <h3 className='text-sm font-medium text-cyan-400 mb-2'>Add Text</h3>
+                    <p className="text-xs text-cyan-400/70 mb-4">
                         Click to add editable text to your canvas     
                     </p>
                 </div>
