@@ -337,7 +337,7 @@ const TopBar = ({project}: {project: Project}) => {
 
                 {/* Hamburger Menu for Actions */}
                 <DropdownMenu 
-                    open={isMainDropdownOpen || isSaving || isReseting || isExporting} 
+                    open={isMainDropdownOpen} 
                     onOpenChange={(open) => {
                         if (!isSaving && !isReseting && !isExporting) {
                             setIsMainDropdownOpen(open);
