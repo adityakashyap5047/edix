@@ -595,11 +595,14 @@ const TopBar = ({project}: {project: Project}) => {
 
                 {/* Undo/Redo - Fixed on left */}
                 <div className="flex items-center gap-1 mr-2">
-                    <Button variant={"ghost"} size={"sm"} className="text-white p-2">
+                    {/* <Button variant={"ghost"} size={"sm"} className="text-white p-2">
                         <RotateCcw className="h-4 w-4" />
                     </Button>
                     <Button variant={"ghost"} size={"sm"} className="text-white p-2">
                         <RotateCw className="h-4 w-4" />
+                    </Button> */}
+                    <Button variant={"ghost"} size={"sm"} className="text-white p-2">
+                        <RotateCw className="h-4 w-4" /> Reset Canvas Size
                     </Button>
                 </div>
             </div>

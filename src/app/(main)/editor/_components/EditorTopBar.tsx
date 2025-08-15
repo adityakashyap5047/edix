@@ -311,15 +311,12 @@ const EditorTopBar = ({project}: {project: Project}) => {
     // Get container dimensions and limits
     const getCanvasLimits = () => {
         if (!canvasEditor) {
-            console.log("No canvas editor available, using defaults");
             return { maxWidth: 1000, maxHeight: 700, minWidth: 50, minHeight: 50 };
         }
         
         // Use viewport-based calculations with proper margins
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        
-        console.log("Full viewport:", { width: viewportWidth, height: viewportHeight });
         
         // Conservative calculation: leave good margins for UI and visual breathing room
         const sidebarWidth = 280;   // Left sidebar
@@ -338,11 +335,6 @@ const EditorTopBar = ({project}: {project: Project}) => {
             minWidth: 50,
             minHeight: 50
         };
-        
-        console.log("Calculated canvas limits (with margins):", limits);
-        console.log("Available space after margins:", { availableWidth, availableHeight });
-        console.log("Current canvas:", { width: canvasEditor.getWidth(), height: canvasEditor.getHeight() });
-        
         return limits;
     };
 
@@ -360,17 +352,16 @@ const EditorTopBar = ({project}: {project: Project}) => {
             } else if (buttonPressed === 'decVert') {
                 handleDecVert();
             }
-        }, 100); // Smooth 100ms intervals
+        }, 100);
 
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [buttonPressed]); // Only depend on buttonPressed - functions are stable
+    }, [buttonPressed]);
 
     const handleResetCanvasSize = async () => {
         if (!canvasEditor) return;
         
         try {
-            setIsReseting(true);
             
             // Use the EXACT same limits as the increment functions
             const { maxWidth, maxHeight } = getCanvasLimits();
@@ -379,16 +370,10 @@ const EditorTopBar = ({project}: {project: Project}) => {
             const resetWidth = maxWidth;
             const resetHeight = maxHeight;
             
-            console.log("Resetting canvas to maximum allowed size:", { resetWidth, resetHeight });
-            console.log("These are the same limits used by Inc functions");
-            console.log("Current canvas size:", { width: canvasEditor.getWidth(), height: canvasEditor.getHeight() });
-            
-            // Store current objects positions relative to center
+            // Store current objects with their complete state (including effects)
             const currentObjects = canvasEditor.getObjects();
-            const currentWidth = canvasEditor.getWidth();
-            const currentHeight = canvasEditor.getHeight();
             
-            // Resize canvas to maximum allowed dimensions (same as increment limits)
+            // Resize canvas to maximum allowed dimensions
             canvasEditor.setWidth(resetWidth);
             canvasEditor.setHeight(resetHeight);
             canvasEditor.setDimensions({
@@ -396,26 +381,28 @@ const EditorTopBar = ({project}: {project: Project}) => {
                 height: resetHeight,
             }, { backstoreOnly: false });
             
-            // Calculate the center offset difference
-            const centerOffsetX = (resetWidth - currentWidth) / 2;
-            const centerOffsetY = (resetHeight - currentHeight) / 2;
+            // Calculate canvas center
+            const canvasCenterX = resetWidth / 2;
+            const canvasCenterY = resetHeight / 2;
             
-            // Adjust all objects to maintain their relative positions in the resized canvas
+            // Center each object individually while preserving ALL properties including effects
             currentObjects.forEach(obj => {
-                const currentLeft = obj.left || 0;
-                const currentTop = obj.top || 0;
-                
+                // Center the object on the new canvas
                 obj.set({
-                    left: currentLeft + centerOffsetX,
-                    top: currentTop + centerOffsetY
+                    left: canvasCenterX,
+                    top: canvasCenterY,
+                    originX: 'center',
+                    originY: 'center'
                 });
+                
+                // Update object coordinates
                 obj.setCoords();
             });
             
             canvasEditor.calcOffset();
             canvasEditor.requestRenderAll();
             
-            // Save the updated state
+            // Save the updated state with preserved effects
             const newCanvasJSON = canvasEditor.toJSON();
             await axios.post(`/api/projects/${project.id}`, {
                 width: resetWidth,
@@ -430,20 +417,15 @@ const EditorTopBar = ({project}: {project: Project}) => {
             project.width = resetWidth;
             project.height = resetHeight;
             
-            toast.success(`Canvas reset to maximum size: ${resetWidth}x${resetHeight}px (with margins)`);
+            toast.success(`Canvas reset to ${resetWidth}x${resetHeight}px with centered content`);
         } catch (error) {
             console.error("Error resetting canvas size:", error);
             toast.error("Failed to reset canvas size. Please try again.");
-        } finally {
-            setIsReseting(false);
         }
     };
 
     const handleIncHorz = async () => {
-        console.log("=== HandleIncHorz called ===");
-        
         if (!canvasEditor) {
-            console.log("No canvas editor available");
             toast.error("Canvas not ready");
             return;
         }
@@ -451,10 +433,7 @@ const EditorTopBar = ({project}: {project: Project}) => {
         const { maxWidth } = getCanvasLimits();
         const currentWidth = canvasEditor.getWidth();
         
-        console.log("HandleIncHorz - Current width:", currentWidth, "Max width:", maxWidth);
-        
         if (currentWidth >= maxWidth) {
-            console.log("Canvas already at max width");
             toast.info(`Canvas is already at maximum width (${maxWidth}px)`);
             return;
         }
@@ -462,14 +441,10 @@ const EditorTopBar = ({project}: {project: Project}) => {
         const increaseAmount = 50; // Larger increase for testing
         const newWidth = Math.min(maxWidth, currentWidth + increaseAmount);
         
-        console.log("Attempting to increase canvas width from", currentWidth, "to", newWidth);
-        
         try {
             const currentHeight = canvasEditor.getHeight();
             const currentObjects = canvasEditor.getObjects();
             const widthIncrease = newWidth - currentWidth;
-            
-            console.log("Width increase amount:", widthIncrease);
             
             // Resize canvas
             canvasEditor.setWidth(newWidth);
@@ -491,7 +466,6 @@ const EditorTopBar = ({project}: {project: Project}) => {
             // Update project width immediately
             project.width = newWidth;
             
-            console.log(`✅ Canvas width successfully increased to: ${newWidth}px`);
             toast.success(`Canvas width increased to ${newWidth}px`);
             
         } catch (error) {
@@ -501,10 +475,7 @@ const EditorTopBar = ({project}: {project: Project}) => {
     };
 
     const handleIncVert = async () => {
-        console.log("=== HandleIncVert called ===");
-        
         if (!canvasEditor) {
-            console.log("No canvas editor available");
             toast.error("Canvas not ready");
             return;
         }
@@ -512,10 +483,7 @@ const EditorTopBar = ({project}: {project: Project}) => {
         const { maxHeight } = getCanvasLimits();
         const currentHeight = canvasEditor.getHeight();
         
-        console.log("HandleIncVert - Current height:", currentHeight, "Max height:", maxHeight);
-        
         if (currentHeight >= maxHeight) {
-            console.log("Canvas already at max height");
             toast.info(`Canvas is already at maximum height (${maxHeight}px)`);
             return;
         }
@@ -523,14 +491,10 @@ const EditorTopBar = ({project}: {project: Project}) => {
         const increaseAmount = 50; // Larger increase for testing
         const newHeight = Math.min(maxHeight, currentHeight + increaseAmount);
         
-        console.log("Attempting to increase canvas height from", currentHeight, "to", newHeight);
-        
         try {
             const currentWidth = canvasEditor.getWidth();
             const currentObjects = canvasEditor.getObjects();
             const heightIncrease = newHeight - currentHeight;
-            
-            console.log("Height increase amount:", heightIncrease);
             
             // Resize canvas
             canvasEditor.setHeight(newHeight);
@@ -552,7 +516,6 @@ const EditorTopBar = ({project}: {project: Project}) => {
             // Update project height immediately
             project.height = newHeight;
             
-            console.log(`✅ Canvas height successfully increased to: ${newHeight}px`);
             toast.success(`Canvas height increased to ${newHeight}px`);
             
         } catch (error) {
@@ -601,8 +564,6 @@ const EditorTopBar = ({project}: {project: Project}) => {
             // Update project width immediately
             project.width = newWidth;
             
-            console.log(`Canvas width decreased to: ${newWidth}px`);
-            
         } catch (error) {
             console.error("Error decreasing canvas width:", error);
             toast.error("Failed to decrease canvas width");
@@ -648,8 +609,6 @@ const EditorTopBar = ({project}: {project: Project}) => {
             
             // Update project height immediately
             project.height = newHeight;
-            
-            console.log(`Canvas height decreased to: ${newHeight}px`);
             
         } catch (error) {
             console.error("Error decreasing canvas height:", error);
