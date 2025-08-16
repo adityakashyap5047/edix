@@ -26,31 +26,75 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
     const [canvasControlsOpen, setCanvasControlsOpen] = useState<boolean>(false);
     const [buttonPressed, setButtonPressed] = useState<string | null>(null);
     const debouncedSaveRef = useRef<NodeJS.Timeout | undefined>(undefined);
+    const resizeTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
     // Get container dimensions and limits
     const getCanvasLimits = () => {
         if (!canvasEditor) {
-            return { maxWidth: 1000, maxHeight: 700, minWidth: 50, minHeight: 50 };
+            return { maxWidth: 800, maxHeight: 600, minWidth: 50, minHeight: 50 };
         }
         
-        // Use viewport-based calculations with proper margins
+        // Try to get the actual canvas container element for more accurate measurements
+        const canvasContainer = canvasEditor.getElement().parentElement;
+        
+        if (canvasContainer) {
+            // Use the actual container dimensions with responsive margins
+            const containerRect = canvasContainer.getBoundingClientRect();
+            
+            // More aggressive margin reduction for smaller screens
+            let margin;
+            if (window.innerWidth < 610) {
+                margin = 16; // Very minimal margin for small screens
+            } else if (window.innerWidth < 768) {
+                margin = 24; // Small margin for mobile
+            } else {
+                margin = 40; // Standard margin for larger screens
+            }
+            
+            const limits = {
+                maxWidth: Math.max(280, Math.floor(containerRect.width - margin)), // Lower minimum for very small screens
+                maxHeight: Math.max(200, Math.floor(containerRect.height - margin)), // Lower minimum for very small screens
+                minWidth: 50,
+                minHeight: 50
+            };
+            return limits;
+        }
+        
+        // Fallback to viewport-based calculations with responsive margins
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         
-        // Conservative calculation: leave good margins for UI and visual breathing room
-        const sidebarWidth = 280;   // Left sidebar
-        const topBarHeight = 80;    // Top controls
-        const rightMargin = 80;     // Right margin for visual space
-        const bottomMargin = 60;    // Bottom margin for visual space
-        const extraPadding = 40;    // Additional padding for comfort
+        // Responsive margins based on screen size - more aggressive for small screens
+        let sidebarWidth, topBarHeight, rightMargin, bottomMargin;
         
-        const availableWidth = viewportWidth - sidebarWidth - rightMargin - extraPadding;
-        const availableHeight = viewportHeight - topBarHeight - bottomMargin - extraPadding;
+        if (viewportWidth < 610) { // Very small screens
+            sidebarWidth = 0;       // No sidebar
+            topBarHeight = 50;      // Minimal top bar
+            rightMargin = 12;       // Very minimal margins
+            bottomMargin = 12;
+        } else if (viewportWidth < 768) { // Mobile
+            sidebarWidth = 0;       // No sidebar on mobile
+            topBarHeight = 60;      // Smaller top bar
+            rightMargin = 16;       // Minimal margins
+            bottomMargin = 16;
+        } else if (viewportWidth < 1024) { // Tablet
+            sidebarWidth = 200;     // Smaller sidebar
+            topBarHeight = 70;
+            rightMargin = 32;       // Reduced margins for tablet
+            bottomMargin = 32;
+        } else { // Desktop
+            sidebarWidth = 280;     // Full sidebar
+            topBarHeight = 80;
+            rightMargin = 60;
+            bottomMargin = 60;
+        }
         
-        // Set limits with good margins - these will be the max for both increment and reset
+        const availableWidth = viewportWidth - sidebarWidth - rightMargin - 20; // Reduced padding
+        const availableHeight = viewportHeight - topBarHeight - bottomMargin - 20; // Reduced padding
+        
         const limits = {
-            maxWidth: Math.max(600, availableWidth),     // At least 600px, with margins
-            maxHeight: Math.max(500, availableHeight),   // At least 500px, with margins
+            maxWidth: Math.max(280, availableWidth),     // Lower minimum for very small screens
+            maxHeight: Math.max(200, availableHeight),   // Lower minimum for very small screens
             minWidth: 50,
             minHeight: 50
         };
@@ -101,6 +145,75 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
             }
         }, 1000);
     }, [project.width, project.height, canvasEditor, project.id, project.currentImageUrl, project.activeTransformations, project.backgroundRemoved]);
+
+    // Auto-reset canvas size on initial mount and window resize
+    useEffect(() => {
+        if (!canvasEditor) return;
+        
+        const handleCanvasReset = () => {
+            // Longer delay to ensure all UI components are fully rendered and sized
+            setTimeout(() => {
+                handleResetCanvasSize();
+            }, 1500); // Increased delay for better stability
+        };
+        
+        // Handle window resize events to re-center canvas
+        const handleResize = () => {
+            // Debounce resize events
+            if (resizeTimeout.current) {
+                clearTimeout(resizeTimeout.current);
+            }
+            resizeTimeout.current = setTimeout(() => {
+                handleResetCanvasSize();
+            }, 300);
+        };
+        
+        // Initial reset
+        handleCanvasReset();
+        
+        // Listen for window resize events
+        window.addEventListener('resize', handleResize);
+        
+        // Also listen for orientation changes on mobile
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 500); // Delay for orientation change to complete
+        });
+        
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleResize);
+            if (resizeTimeout.current) {
+                clearTimeout(resizeTimeout.current);
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canvasEditor]); // Only run when canvas editor becomes available
+    
+    // Additional effect to reset when objects are loaded
+    useEffect(() => {
+        if (!canvasEditor) return;
+        
+        const checkAndResetIfNeeded = () => {
+            const objects = canvasEditor.getObjects();
+            if (objects.length > 0) {
+                // If we have objects but canvas is still small, reset
+                const canvasWidth = canvasEditor.getWidth();
+                const canvasHeight = canvasEditor.getHeight();
+                const { maxWidth, maxHeight } = getCanvasLimits();
+                
+                // If canvas is significantly smaller than it should be, reset
+                if (canvasWidth < maxWidth * 0.7 || canvasHeight < maxHeight * 0.7) {
+                    setTimeout(() => handleResetCanvasSize(), 1000);
+                }
+            }
+        };
+        
+        // Check after a delay to allow objects to load
+        const timer = setTimeout(checkAndResetIfNeeded, 2000);
+        
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canvasEditor, project.currentImageUrl]); // Also trigger when image changes
 
     const handleResetCanvasSize = async () => {
         if (!canvasEditor) return;
