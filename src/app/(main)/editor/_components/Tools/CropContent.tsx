@@ -5,6 +5,7 @@ import { useCanvas } from "@/context/Context";
 import { Project } from "@/types";
 import axios from "axios";
 import { FabricImage, Rect, FabricObject } from "fabric";
+import fabric from "fabric";
 import { CheckCheck, RectangleHorizontal, RectangleVertical, RotateCcw, Smartphone, Square, X, MoveDown, MoveUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { BarLoader } from "react-spinners";
@@ -46,6 +47,7 @@ const CropContent = ({project}: {project: Project}) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [pendingAspectRatio, setPendingAspectRatio] = useState<number | null>(null);
   const [isFirstTimesEntered, setIsFirstTimesEntered] = useState<boolean>(false);
+  const [canvasState, setCanvasState] = useState<fabric.Canvas | null>(null);
 
   const maintainLayerOrder = useCallback((newImage: FabricObject, originalIndex: number) => {
     if (!canvasEditor) return;
@@ -209,12 +211,12 @@ const CropContent = ({project}: {project: Project}) => {
 
   useEffect(() => {
     setIsFirstTimesEntered(true);
-  }, []);
+    setCanvasState(canvasEditor?.toJSON());
+  }, [canvasEditor]);
 
   useEffect(() => {
     if (activeTool === "crop" && canvasEditor && isCropMode && isFirstTimesEntered) { 
       setLoading(true);
-      const canvasState = canvasEditor.toJSON();
       const getProjectData = async () => {
         try {
           const response = await axios.get(`/api/projects/${project.id}`);
@@ -237,7 +239,7 @@ const CropContent = ({project}: {project: Project}) => {
       };
       getProjectData();
     }
-  }, [activeTool, canvasEditor, project, isCropMode, isFirstTimesEntered]);
+  }, [activeTool, canvasEditor, project, isCropMode, isFirstTimesEntered, canvasState]);
 
   useEffect(() => {
     return () => {
