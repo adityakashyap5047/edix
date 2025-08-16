@@ -8,7 +8,7 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { Project, ToolId, PremiumTool, User } from "@/types"
 import axios from "axios";
 import { FabricImage, ImageFormat, TMat2D } from "fabric";
-import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Sliders, Text, Lock, Loader2, RefreshCcw, Save, ChevronDown, FileImage, Menu, DownloadIcon } from "lucide-react";
+import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Text, Lock, Loader2, RefreshCcw, Save, ChevronDown, FileImage, Menu, DownloadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -25,11 +25,6 @@ const TOOLS  = [
     id: "crop",
     label: "Crop",
     icon: Crop,
-  },
-  {
-    id: "adjust",
-    label: "Adjust",
-    icon: Sliders,
   },
   {
     id: "text",
