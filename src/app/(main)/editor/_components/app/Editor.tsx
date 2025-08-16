@@ -6,7 +6,6 @@ import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Canvas, FabricImage } from "fabric";
 import { toast } from 'sonner';
-import axios, { AxiosError } from 'axios';
 
 const Editor = ({project}: {project: Project}) => {
 
@@ -283,31 +282,6 @@ const Editor = ({project}: {project: Project}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canvasScale, canvasEditor, project]);
 
-    const savedCanvasState = useCallback(async () => {
-        if (!canvasEditor || !project) {
-            return;
-        }
-
-        try {
-            const canvasJSON = canvasEditor.toJSON();
-
-            await axios.post(`/api/projects/${project.id}`, {
-                canvasState: canvasJSON
-            }, {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
-
-            toast.success("Project auto-saved");
-        } catch (error) {
-            const axiosError = error as AxiosError<{ error?: string }>;
-            console.error('Error saving canvas state:', axiosError.response?.data || error);
-            toast.error(axiosError.response?.data?.error || "Unknown error occurred while auto saving project.");
-        }
-    }, [canvasEditor, project]);
-
-    // Handle window resize to adjust canvas dimensions
     useEffect(() => {
         let isResizing = false;
         
@@ -397,42 +371,6 @@ const Editor = ({project}: {project: Project}) => {
             timeout = setTimeout(later, wait);
         };
     }
-
-    // Auto Save
-    useEffect(() => {
-        if (!canvasEditor) {
-            return;
-        }
-
-        let saveTimeout: ReturnType<typeof setTimeout>;
-        
-        // Debounced function - wait 2 seconds after last change
-        const handleCanvasChange = () => {
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                savedCanvasState();
-            }, 5000); // 5 second delay
-        }
-
-        // Listen for canvas modification events
-        canvasEditor.on("object:modified", handleCanvasChange); // Object transformed/moved
-        canvasEditor.on("object:added", handleCanvasChange);    // New Object added
-        canvasEditor.on("object:removed", handleCanvasChange);  // Object deleted
-        canvasEditor.on("path:created", handleCanvasChange);    // Drawing/freehand
-        canvasEditor.on("selection:created", handleCanvasChange); // Selection events
-        canvasEditor.on("selection:updated", handleCanvasChange);   // updated selection
-        
-        // Cleanup function to remove event listeners
-        return () => {
-            clearTimeout(saveTimeout);
-            canvasEditor.off("object:modified", handleCanvasChange);
-            canvasEditor.off("object:added", handleCanvasChange);
-            canvasEditor.off("object:removed", handleCanvasChange);
-            canvasEditor.off("path:created", handleCanvasChange);
-            canvasEditor.off("selection:created", handleCanvasChange);
-            canvasEditor.off("selection:updated", handleCanvasChange);
-        };
-    }, [canvasEditor, savedCanvasState]);
 
     // Initialize Canvas 
     useEffect(() => {

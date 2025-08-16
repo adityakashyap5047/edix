@@ -4,4 +4,4 @@
 // 4. Mobile Responsible
 5. WebHooks for plan
 6. Optional - When I click on upgrade modal then it redirect to the state where it was left
-7. Project AutoSave Prevention
+// 7. Project AutoSave Prevention
