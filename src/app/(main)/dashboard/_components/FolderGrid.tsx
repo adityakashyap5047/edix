@@ -4,7 +4,7 @@ import FolderCard from "./FolderCard";
 
 interface FolderGridProps {
   folders: Folder[];
-  onFolderSelect: (folderId: string) => void;
+  onFolderSelect: (folderId: string | null) => void;
   onFolderUpdate: () => void;
 }
 

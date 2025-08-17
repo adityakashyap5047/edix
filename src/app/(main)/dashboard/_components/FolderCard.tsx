@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 interface FolderCardProps {
   folder: Folder;
-  onFolderSelect: (folderId: string) => void;
+  onFolderSelect: (folderId: string | null) => void;
   onFolderUpdate: () => void;
 }
 
@@ -81,7 +81,10 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
             ) : (
                 <h3 
                     className="font-semibold text-white cursor-pointer hover:text-blue-400 transition-colors text-xs sm:text-sm truncate flex-1"
-                    onClick={() => onFolderSelect(folder.id)}
+                    onClick={() => {
+                        console.log("Folder clicked:", folder.id, folder.name);
+                        onFolderSelect(folder.id);
+                    }}
                     title={folder.name}
                 >
                     {folder.name}
