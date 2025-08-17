@@ -1,10 +1,11 @@
 "use client";
 
+import { DeleteConfirmDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Folder } from "@/types";
 import axios from "axios";
-import { Edit2, FolderIcon, MoreHorizontal, Trash2 } from "lucide-react";
+import { Edit2, FolderIcon, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,25 +27,26 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
       return;
     }
     setIsRenaming(true);
-    toast.info("Renaming folder...");
+    const loadingToastId = toast.loading("Renaming folder...");
     try {
       await axios.patch(`/api/folders/${folder.id}`, {
         name: editName.trim(),
       });
       setIsEditing(false);
       onFolderUpdate();
+      toast.dismiss(loadingToastId);
       toast.success("Folder renamed successfully");
     } catch (error) {
       console.error("Error renaming folder:", error);
       toast.error("Failed to rename folder");
     } finally {
-        setIsRenaming(false);
+      setIsRenaming(false);
     }
   };
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    try {
+    try {   
       const response = await axios.delete(`/api/folders/${folder.id}`);
       if (response.status === 203) {
         toast.info("Cannot delete folder with contents");
@@ -117,14 +119,16 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
                         <Edit2 className="h-4 w-4 mr-2" />
                         Rename
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="text-red-400 hover:bg-red-900/20 cursor-pointer disabled:opacity-50"
-                    >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {isDeleting ? "Deleting..." : "Delete"}
-                    </DropdownMenuItem>
+                    <div className="px-2 py-1">
+                        <DeleteConfirmDialog
+                            onConfirm={handleDelete}
+                            variant="ghost"
+                            loading={isDeleting}
+                            title={`Are you sure you want to delete "${folder.name}"?`}
+                            description="This action cannot be undone."
+                            setLoading={setIsDeleting}
+                        />
+                    </div>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>

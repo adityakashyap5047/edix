@@ -18,6 +18,7 @@ interface DeleteConfirmDialogProps {
   onConfirm: () => Promise<void> | void;
   loading?: boolean;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  variant?: "glass" | "link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | "primary"
 }
 
 export function DeleteConfirmDialog({
@@ -25,6 +26,7 @@ export function DeleteConfirmDialog({
   description = "This action cannot be undone. This will permanently delete the project.",
   onConfirm,
   loading,
+  variant="glass"
 }: DeleteConfirmDialogProps) {
 
     const [open, setOpen] = useState<boolean>(false);
@@ -48,7 +50,7 @@ export function DeleteConfirmDialog({
 
     return (
         <>
-            <Button onClick={() => setOpen(true)} variant={"glass"} size={"sm"} className={`gap-2 text-red-400 hover:text-red-300 cursor-pointer`} disabled={loading}>
+            <Button onClick={() => setOpen(true)} variant={variant} size={"sm"} className={`gap-2 text-red-400 hover:text-red-300 cursor-pointer`} disabled={loading}>
                 <Trash2 className="h-4 w-4" />
                 Delete
             </Button>
