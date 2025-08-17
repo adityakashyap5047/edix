@@ -1,25 +1,38 @@
-"use client";
-
-import { DeleteConfirmDialog } from "@/components/DeleteDialog";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Folder } from "@/types";
 import axios from "axios";
-import { Edit2, FolderIcon, MoreHorizontal } from "lucide-react";
+import { Edit2, FolderIcon, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface FolderCardProps {
   folder: Folder;
   onFolderSelect: (folderId: string | null) => void;
-  onFolderUpdate: () => void;
+  setFolders: React.Dispatch<React.SetStateAction<Folder[]>>;
+}
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { 
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Folder } from "@/types";
+
+interface FolderCardProps {
+  folder: Folder;
+  onFolderSelect: (folderId: string | null) => void;
+  setFolders: React.Dispatch<React.SetStateAction<Folder[]>>;
 }
 
-const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps) => {
+const FolderCard = ({ folder, onFolderSelect, setFolders }: FolderCardProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(folder.name);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
 
   const handleEdit = async () => {
     if (!editName.trim()) {
@@ -27,24 +40,44 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
       return;
     }
     setIsRenaming(true);
-    const loadingToastId = toast.loading("Renaming folder...");
+    const toastId = toast.loading("Renaming folder...");
     try {
       await axios.patch(`/api/folders/${folder.id}`, {
         name: editName.trim(),
       });
+      
+      // Immediately update the local state
+      setFolders(prevFolders => 
+        prevFolders.map(f => 
+          f.id === folder.id 
+            ? { ...f, name: editName.trim() }
+            : f
+        )
+      );
+      
       setIsEditing(false);
-      onFolderUpdate();
-      toast.dismiss(loadingToastId);
+      toast.dismiss(toastId);
       toast.success("Folder renamed successfully");
+      
     } catch (error) {
       console.error("Error renaming folder:", error);
+      toast.dismiss(toastId);
       toast.error("Failed to rename folder");
+      // Reset the edit name to original on error
+      setEditName(folder.name);
     } finally {
       setIsRenaming(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    setDropdownOpen(false);
+    setTimeout(() => {
+      setDeleteDialogOpen(true);
+    }, 100);
+  };
+
+  const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {   
       const response = await axios.delete(`/api/folders/${folder.id}`);
@@ -52,8 +85,12 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
         toast.info("Cannot delete folder with contents");
         return;
       }
+      
+      setFolders(prevFolders => 
+        prevFolders.filter(f => f.id !== folder.id)
+      );
+      
       toast.success("Folder deleted successfully");
-      onFolderUpdate();
     } catch (error: unknown) {
       console.error("Error deleting folder:", error);
       const errorMessage = axios.isAxiosError(error) && error.response?.data?.error 
@@ -62,6 +99,7 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
       toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -101,7 +139,7 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
                 </h3>
             )}
 
-            <DropdownMenu>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                     <Button
                         variant="ghost"
@@ -113,25 +151,58 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
                     <DropdownMenuItem
-                        onClick={() => setIsEditing(true)}
+                        onClick={() => {
+                            setIsEditing(true);
+                            setDropdownOpen(false);
+                        }}
                         className="text-white hover:bg-slate-700 cursor-pointer"
                     >
                         <Edit2 className="h-4 w-4 mr-2" />
                         Rename
                     </DropdownMenuItem>
                     <div className="px-2 py-1">
-                        <DeleteConfirmDialog
-                            onConfirm={handleDelete}
+                        <Button
+                            onClick={handleDeleteClick}
                             variant="ghost"
-                            loading={isDeleting}
-                            title={`Are you sure you want to delete "${folder.name}"?`}
-                            description="This action cannot be undone."
-                            setLoading={setIsDeleting}
-                        />
+                            size="sm"
+                            className="gap-2 text-red-400 hover:text-red-300 cursor-pointer"
+                            disabled={isDeleting}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                        </Button>
                     </div>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
+        
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent className="bg-slate-800 text-white fixed top-[20vh] max-sm:top-[30vh]">
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to delete &quot;{folder.name}&quot;?</AlertDialogTitle>
+                    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <Button 
+                        variant="glass" 
+                        onClick={() => setDeleteDialogOpen(false)} 
+                        disabled={isDeleting} 
+                        className="hover:!bg-slate-900"
+                    >
+                        Cancel
+                    </Button>
+                    <Button 
+                        variant="destructive" 
+                        onClick={handleDeleteConfirm} 
+                        disabled={isDeleting} 
+                        className="hover:!bg-red-400"
+                    >
+                        {isDeleting ? "Deleting..." : "Yes, Delete"}
+                    </Button>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 };

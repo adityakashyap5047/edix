@@ -5,10 +5,10 @@ import FolderCard from "./FolderCard";
 interface FolderGridProps {
   folders: Folder[];
   onFolderSelect: (folderId: string | null) => void;
-  onFolderUpdate: () => void;
+  setFolders: React.Dispatch<React.SetStateAction<Folder[]>>;
 }
 
-const FolderGrid = ({ folders, onFolderSelect, onFolderUpdate }: FolderGridProps) => {
+const FolderGrid = ({ folders, onFolderSelect, setFolders }: FolderGridProps) => {
   if (!folders || folders.length === 0) {
     return null;
   }
@@ -22,7 +22,7 @@ const FolderGrid = ({ folders, onFolderSelect, onFolderUpdate }: FolderGridProps
             key={folder.id}
             folder={folder}
             onFolderSelect={onFolderSelect}
-            onFolderUpdate={onFolderUpdate}
+            setFolders={setFolders}
           />
         ))}
       </div>

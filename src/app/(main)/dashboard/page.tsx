@@ -137,7 +137,7 @@ const Page = () => {
                         <FolderGrid 
                             folders={folders}
                             onFolderSelect={handleFolderSelect}
-                            onFolderUpdate={handleFolderCreated}
+                            setFolders={setFolders}
                         />
                         
                         {/* Project Grid */}
