@@ -12,7 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmDialog } from "@/components/DeleteDialog";
 
-const ProjectCard = ({ project, onEdit, setProjects }: { project: Project, onEdit: () => void, setProjects: React.Dispatch<React.SetStateAction<Project[]>> }) => {
+const ProjectCard = ({ project, onEdit, setProjects, setProjectCount }: { project: Project, onEdit: () => void, setProjects: React.Dispatch<React.SetStateAction<Project[]>>, setProjectCount: React.Dispatch<React.SetStateAction<number>> }) => {
 
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -23,6 +23,7 @@ const ProjectCard = ({ project, onEdit, setProjects }: { project: Project, onEdi
             await axios.get("/api/projects"); 
             toast.success(response.data.message || "Project deleted successfully.");
             setProjects((prev: Project[]) => prev.filter((p: Project) => p.id !== project.id));
+            setProjectCount((prev) => prev-1);
         } catch (error) {
             const axiosError = error as AxiosError<{ error?: string }>;
             console.error('Error deleting project:', error);

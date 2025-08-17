@@ -28,9 +28,10 @@ interface NewProjectModalProps {
   onClose: () => void;
   projects: Project[];
   folderId?: string | null;
+  projectCount: number;
 }
 
-const NewProjectModal = ({ isOpen, onClose, projects, folderId }: NewProjectModalProps) => {
+const NewProjectModal = ({ isOpen, onClose, projects, folderId, projectCount }: NewProjectModalProps) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [projectTitle, setProjectTitle] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -41,7 +42,7 @@ const NewProjectModal = ({ isOpen, onClose, projects, folderId }: NewProjectModa
 
   const { isFree, canCreateProject } = usePlanAccess();
 
-  const currentProjectCount = projects.length;
+  const currentProjectCount = projectCount > projects.length ? projectCount : projects.length;
 
   const canCreate = canCreateProject(currentProjectCount);
 

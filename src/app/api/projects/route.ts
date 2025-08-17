@@ -125,8 +125,19 @@ export async function GET(request: NextRequest) {
             }
         });
 
+        // Get total project count for the user (for upgrade modal)
+        const projectCount = await db.project.count({
+            where: {
+                userId: existingUser.id
+            }
+        });
+
         return NextResponse.json(
-            { projects },
+            { 
+                projects,
+                projectCount,
+                userPlan: existingUser.plan
+            },
             { status: 200 }
         );
     } catch (error: unknown) {
@@ -205,7 +216,7 @@ export async function DELETE(request: NextRequest) {
         const options = {
             method: 'GET',
             url: 'https://api.imagekit.io/v1/files',
-            params: {type: 'file', path: 'edix/projects', fileType: 'image'},
+            params: {type: 'file', path: 'Edix/projects', fileType: 'image'},
             headers: {
                 Accept: 'application/json',
                 Authorization: `Basic ${process.env.IMAGEKIT_TOKEN}`

@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         const response = await imagekit.upload({
             file: buffer,
             fileName: uniqueFileName,
-            folder: "/edix/projects"
+            folder: "/Edix/projects"
         });
 
         const thumbnailUrl = imagekit.url({

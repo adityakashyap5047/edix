@@ -130,7 +130,6 @@ const FolderCard = ({ folder, onFolderSelect, setFolders }: FolderCardProps) => 
                 <h3 
                     className="font-semibold text-white cursor-pointer hover:text-blue-400 transition-colors text-xs sm:text-sm truncate flex-1"
                     onClick={() => {
-                        console.log("Folder clicked:", folder.id, folder.name);
                         onFolderSelect(folder.id);
                     }}
                     title={folder.name}

@@ -2,7 +2,7 @@ import { Project } from '@/types'
 import { useRouter } from 'next/navigation'
 import ProjectCard from './ProjectCard';
 
-const ProjectGrid = ({projects, setProjects}: {projects: Project[], setProjects: React.Dispatch<React.SetStateAction<Project[]>>}) => {
+const ProjectGrid = ({projects, setProjects, setProjectCount}: {projects: Project[], setProjects: React.Dispatch<React.SetStateAction<Project[]>>, setProjectCount:React.Dispatch<React.SetStateAction<number>>}) => {
 
     const router = useRouter();
 
@@ -17,6 +17,7 @@ const ProjectGrid = ({projects, setProjects}: {projects: Project[], setProjects:
                     key={project.id}
                     project={project}
                     onEdit={() => handleEdit(project.id)}
+                    setProjectCount={setProjectCount}
                     setProjects={setProjects}
                 />
             ))}

@@ -21,6 +21,7 @@ const Page = () => {
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const [projectCount, setProjectCount] = useState<number>(0);
 
     const handleFolderSelect = (folderId: string | null) => {
         setCurrentFolderId(folderId);
@@ -39,7 +40,7 @@ const Page = () => {
                         params: currentFolderId ? { parentId: currentFolderId } : { parentId: null }
                     })
                 ]);
-                
+                setProjectCount(projectsResponse.data.projectCount);
                 setProjects(projectsResponse.data.projects);
                 setFolders(foldersResponse.data.folders);
             } catch (error) {
@@ -142,7 +143,7 @@ const Page = () => {
                         
                         {/* Project Grid */}
                         {projects && projects?.length > 0 ? (
-                            <ProjectGrid projects={projects} setProjects={setProjects} />
+                            <ProjectGrid projects={projects} setProjectCount={setProjectCount} setProjects={setProjects} />
                         ) : folders.length === 0 ? (
                             <EmptyState onCreateProject={() => setShowNewProjectModal(true)} />
                         ) : (
@@ -165,6 +166,7 @@ const Page = () => {
                     isOpen={showNewProjectModal}
                     onClose={() => setShowNewProjectModal(false)}
                     projects={projects}
+                    projectCount={projectCount}
                     folderId={currentFolderId}
                 />
 
