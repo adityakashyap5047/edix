@@ -8,11 +8,10 @@ import { usePlanAccess } from "@/hooks/usePlanAccess";
 import { Project, ToolId, PremiumTool, User } from "@/types"
 import axios from "axios";
 import { FabricImage, ImageFormat, TMat2D } from "fabric";
-import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Text, Lock, Loader2, RefreshCcw, Save, ChevronDown, FileImage, Menu, DownloadIcon } from "lucide-react";
+import { ArrowLeft, Crop, Expand, Eye, Maximize2, Palette, Sliders, Text, Lock, RotateCcw, RotateCw, Loader2, RefreshCcw, Save, ChevronDown, FileImage, Menu, DownloadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import CanvasSizeControls from "../CanvasSizeControls";
 
 const TOOLS  = [
   {
@@ -25,6 +24,11 @@ const TOOLS  = [
     id: "crop",
     label: "Crop",
     icon: Crop,
+  },
+  {
+    id: "adjust",
+    label: "Adjust",
+    icon: Sliders,
   },
   {
     id: "text",
@@ -588,8 +592,18 @@ const TopBar = ({project}: {project: Project}) => {
                         })}
                     </div>
                 </div>
+
+                {/* Undo/Redo - Fixed on left */}
                 <div className="flex items-center gap-1 mr-2">
-                    <CanvasSizeControls project={project} />
+                    {/* <Button variant={"ghost"} size={"sm"} className="text-white p-2">
+                        <RotateCcw className="h-4 w-4" />
+                    </Button>
+                    <Button variant={"ghost"} size={"sm"} className="text-white p-2">
+                        <RotateCw className="h-4 w-4" />
+                    </Button> */}
+                    <Button variant={"ghost"} size={"sm"} className="text-white p-2">
+                        <RotateCw className="h-4 w-4" /> Reset Canvas Size
+                    </Button>
                 </div>
             </div>
         </div>  

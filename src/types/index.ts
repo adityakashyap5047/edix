@@ -12,6 +12,7 @@ export interface User {
   plan: Plan;
   projectsUsed: number;
   exportsThisMonth: number;
+  lastWebhookId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 
@@ -43,10 +44,13 @@ export interface Folder {
   id: string;
   name: string;
   userId: string;
+  parentId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 
   user: User;
+  parent?: Folder | null;
+  children?: Folder[];
   projects: Project[];
 }
 

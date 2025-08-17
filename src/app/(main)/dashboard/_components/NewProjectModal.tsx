@@ -27,9 +27,10 @@ interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   projects: Project[];
+  folderId?: string | null;
 }
 
-const NewProjectModal = ({ isOpen, onClose, projects }: NewProjectModalProps) => {
+const NewProjectModal = ({ isOpen, onClose, projects, folderId }: NewProjectModalProps) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [projectTitle, setProjectTitle] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -114,7 +115,8 @@ const NewProjectModal = ({ isOpen, onClose, projects }: NewProjectModalProps) =>
         thumbnailUrl: image.thumbnailUrl,
         width: image.width || 800,
         height: image.height || 600,
-        canvasState: null
+        canvasState: null,
+        folderId: folderId || null
       }, {
         headers: {
           "Content-Type": "application/json"

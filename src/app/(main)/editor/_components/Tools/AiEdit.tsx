@@ -111,7 +111,6 @@ const AiEdit = ( {project}: {project: Project} ) => {
             retouchedImage.setCoords();
             canvasEditor.setActiveObject(retouchedImage);
             canvasEditor.requestRenderAll();
-
             const response = await axios.post(`/api/projects/${project.id}`, {
                 currentImageUrl: retouchedUrl,
                 canvasState: canvasEditor.toJSON(),

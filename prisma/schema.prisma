@@ -22,6 +22,7 @@ model User {
   plan             Plan     @default(FREE)
   projectsUsed     Int      @default(0)
   exportsThisMonth Int      @default(0)
+  lastWebhookId    String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -57,13 +58,18 @@ model Folder {
   id        String   @id @default(uuid())
   name      String
   userId    String
+  parentId  String?  // For nested folders
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Folder?   @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[]  @relation("FolderHierarchy")
   projects Project[]
 
   @@index([userId])
+  @@index([parentId])
+  @@index([userId, parentId])
 }
 
 enum Plan {
