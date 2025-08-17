@@ -7,17 +7,10 @@ import EmptyState from "./_components/EmptyState";
 import NewProjectModal from "./_components/NewProjectModal";
 import NewFolderModal from "./_components/NewFolderModal";
 import FolderBreadcrumb from "./_components/FolderBreadcrumb";
+import FolderGrid from "./_components/FolderGrid";
 import axios from "axios";
-import { Project } from "@/types";
+import { Folder, Project } from "@/types";
 import ProjectGrid from "./_components/ProjectGrid";
-
-interface Folder {
-  id: string;
-  name: string;
-  parentId: string | null;
-  children?: Folder[];
-  projectCount?: number;
-}
 
 const Page = () => {
 
@@ -29,6 +22,10 @@ const Page = () => {
     const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
+    const handleFolderSelect = (folderId: string | null) => {
+        setCurrentFolderId(folderId);
+    };
+
     useEffect(() => {
         const fetchData = async() => {
             setLoading(true);
@@ -38,7 +35,9 @@ const Page = () => {
                     axios.get("/api/projects", {
                         params: currentFolderId ? { folderId: currentFolderId } : {}
                     }),
-                    axios.get("/api/folders")
+                    axios.get("/api/folders", {
+                        params: currentFolderId ? { parentId: currentFolderId } : { parentId: null }
+                    })
                 ]);
                 
                 setProjects(projectsResponse.data.projects);
@@ -66,7 +65,9 @@ const Page = () => {
                     axios.get("/api/projects", {
                         params: currentFolderId ? { folderId: currentFolderId } : {}
                     }),
-                    axios.get("/api/folders")
+                    axios.get("/api/folders", {
+                        params: currentFolderId ? { parentId: currentFolderId } : { parentId: null }
+                    })
                 ]);
                 
                 setProjects(projectsResponse.data.projects);
@@ -85,7 +86,7 @@ const Page = () => {
                 <div className="flex items-center justify-between mb-6">
                     <FolderBreadcrumb
                         currentFolderId={currentFolderId}
-                        onFolderSelect={setCurrentFolderId}
+                        onFolderSelect={handleFolderSelect}
                     />
                     
                     {/* Folder Controls */}
@@ -130,10 +131,34 @@ const Page = () => {
                     <div className="flex items-center justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
                     </div>
-                ) : projects && projects?.length > 0 ? (
-                    <ProjectGrid projects={projects} setProjects={setProjects} />
                 ) : (
-                    <EmptyState onCreateProject={() => setShowNewProjectModal(true)} />
+                    <div>
+                        {/* Folder Grid */}
+                        <FolderGrid 
+                            folders={folders}
+                            onFolderSelect={handleFolderSelect}
+                            onFolderUpdate={handleFolderCreated}
+                        />
+                        
+                        {/* Project Grid */}
+                        {projects && projects?.length > 0 ? (
+                            <ProjectGrid projects={projects} setProjects={setProjects} />
+                        ) : folders.length === 0 ? (
+                            <EmptyState onCreateProject={() => setShowNewProjectModal(true)} />
+                        ) : (
+                            <div className="text-center py-12">
+                                <p className="text-white/60 mb-4">No projects in this folder yet</p>
+                                <Button
+                                    onClick={() => setShowNewProjectModal(true)}
+                                    variant="primary"
+                                    className="gap-2"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Create First Project
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 <NewProjectModal

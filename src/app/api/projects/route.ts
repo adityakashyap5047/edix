@@ -82,7 +82,7 @@ export async function POST(request: NextRequest){
     }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
 
     try {
         const user = await currentUser();
@@ -98,9 +98,6 @@ export async function GET() {
             where: {
                 clerkUserId: user?.id
             },
-            include: {
-                projects: true,
-            },
         });
 
         if (!existingUser) {
@@ -110,8 +107,26 @@ export async function GET() {
             ); 
         }
 
+        // Get folderId from search parameters
+        const { searchParams } = new URL(request.url);
+        const folderId = searchParams.get('folderId');
+
+        // Build where clause based on folderId parameter
+        const whereClause = {
+            userId: existingUser.id,
+            ...(folderId ? { folderId: folderId } : { folderId: null })
+        };
+
+        // Fetch projects filtered by folder
+        const projects = await db.project.findMany({
+            where: whereClause,
+            orderBy: {
+                updatedAt: 'desc'
+            }
+        });
+
         return NextResponse.json(
-            { projects: existingUser.projects },
+            { projects },
             { status: 200 }
         );
     } catch (error: unknown) {

@@ -18,30 +18,38 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(folder.name);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
   const handleEdit = async () => {
     if (!editName.trim()) {
       toast.error("Folder name cannot be empty");
       return;
     }
+    setIsRenaming(true);
     toast.info("Renaming folder...");
     try {
       await axios.patch(`/api/folders/${folder.id}`, {
         name: editName.trim(),
       });
-      onFolderUpdate();
       setIsEditing(false);
+      onFolderUpdate();
       toast.success("Folder renamed successfully");
     } catch (error) {
       console.error("Error renaming folder:", error);
       toast.error("Failed to rename folder");
+    } finally {
+        setIsRenaming(false);
     }
   };
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await axios.delete(`/api/folders/${folder.id}`);
+      const response = await axios.delete(`/api/folders/${folder.id}`);
+      if (response.status === 203) {
+        toast.info("Cannot delete folder with contents");
+        return;
+      }
       toast.success("Folder deleted successfully");
       onFolderUpdate();
     } catch (error: unknown) {
@@ -71,7 +79,7 @@ const FolderCard = ({ folder, onFolderSelect, onFolderUpdate }: FolderCardProps)
             {isEditing ? (
                 <input
                     type="text"
-                    disabled={isEditing || isDeleting}
+                    disabled={isRenaming}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     onKeyDown={handleKeyPress}
