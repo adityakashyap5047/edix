@@ -15,44 +15,34 @@ interface FolderBreadcrumbProps {
 }
 
 const FolderBreadcrumb = ({ currentFolderId, onFolderSelect }: FolderBreadcrumbProps) => {
-  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
+  const [currentFolder, setCurrentFolder] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchBreadcrumbs = async () => {
+    const fetchCurrentFolder = async () => {
       if (!currentFolderId) {
-        setBreadcrumbs([{ id: null, name: "All Projects" }]);
+        setCurrentFolder(null);
         return;
       }
 
       setLoading(true);
       try {
-        const response = await axios.get(`/api/folders/${currentFolderId}/path`);
-        const path = response.data.path;
-        
-        const breadcrumbItems: BreadcrumbItem[] = [
-          { id: null, name: "All Projects" },
-          ...path.map((folder: { id: string; name: string }) => ({
-            id: folder.id,
-            name: folder.name,
-          })),
-        ];
-        
-        setBreadcrumbs(breadcrumbItems);
+        const response = await axios.get(`/api/folders/${currentFolderId}`);
+        setCurrentFolder(response.data.folder);
       } catch (error) {
-        console.error("Error fetching breadcrumbs:", error);
-        setBreadcrumbs([{ id: null, name: "All Projects" }]);
+        console.error("Error fetching folder:", error);
+        setCurrentFolder(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBreadcrumbs();
+    fetchCurrentFolder();
   }, [currentFolderId]);
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-white/60 mb-4">
+      <div className="flex items-center gap-2 text-white/60">
         <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-400 border-t-transparent"></div>
         <span className="text-sm">Loading...</span>
       </div>
@@ -60,25 +50,30 @@ const FolderBreadcrumb = ({ currentFolderId, onFolderSelect }: FolderBreadcrumbP
   }
 
   return (
-    <div className="flex items-center gap-2 text-white/60 mb-4 overflow-x-auto">
+    <div className="flex items-center gap-2 text-white/60 overflow-x-auto scrollbar-hide">
       <Home className="h-4 w-4 flex-shrink-0" />
       
-      {breadcrumbs.map((item, index) => (
-        <div key={item.id || "root"} className="flex items-center gap-2">
-          {index > 0 && <ChevronRight className="h-4 w-4 flex-shrink-0" />}
-          
-          <button
-            onClick={() => onFolderSelect(item.id)}
-            className={`text-sm transition-colors hover:text-white whitespace-nowrap ${
-              index === breadcrumbs.length - 1
-                ? "text-blue-400 font-medium"
-                : "text-white/60 hover:text-white"
-            }`}
-          >
-            {item.name}
-          </button>
-        </div>
-      ))}
+      {/* Home */}
+      <button
+        onClick={() => onFolderSelect(null)}
+        className={`text-sm transition-colors hover:text-white whitespace-nowrap ${
+          !currentFolderId
+            ? "text-blue-400 font-medium"
+            : "text-white/60 hover:text-white"
+        }`}
+      >
+        Home
+      </button>
+
+      {/* Current Folder */}
+      {currentFolder && (
+        <>
+          <ChevronRight className="h-4 w-4 flex-shrink-0" />
+          <span className="text-sm text-blue-400 font-medium whitespace-nowrap max-w-[150px] sm:max-w-[200px] truncate" title={currentFolder.name}>
+            {currentFolder.name}
+          </span>
+        </>
+      )}
     </div>
   );
 };
