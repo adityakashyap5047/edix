@@ -16,7 +16,6 @@ interface FolderBreadcrumbProps {
 
 const FolderBreadcrumb = ({ currentFolderId, onFolderSelect }: FolderBreadcrumbProps) => {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchBreadcrumbs = async () => {
@@ -25,7 +24,6 @@ const FolderBreadcrumb = ({ currentFolderId, onFolderSelect }: FolderBreadcrumbP
         return;
       }
 
-      setLoading(true);
       try {
         const response = await axios.get(`/api/folders/${currentFolderId}/breadcrumb`);
         const breadcrumbPath = response.data.breadcrumb;
@@ -43,22 +41,11 @@ const FolderBreadcrumb = ({ currentFolderId, onFolderSelect }: FolderBreadcrumbP
       } catch (error) {
         console.error("Error fetching breadcrumbs:", error);
         setBreadcrumbs([{ id: null, name: "Home" }]);
-      } finally {
-        setLoading(false);
-      }
+      } 
     };
 
     fetchBreadcrumbs();
   }, [currentFolderId]);
-
-  // if (loading) {
-  //   return (
-  //     <div className="flex items-center gap-2 text-white/60">
-  //       
-  //       <span className="text-sm">Loading...</span>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="flex items-center gap-2 text-white/60 overflow-x-auto scrollbar-hide">
