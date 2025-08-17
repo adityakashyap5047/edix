@@ -1,35 +1,35 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-// GET /api/folders/[folderId] - Get a specific folder with its contents
-export async function GET(
-  req: Request,
-  { params }: { params: { folderId: string } }
-) {
+export async function GET(request: NextRequest,{ params }: { params: Promise<{ folderId: string }> }) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const { folderId } = params;
-
-    // Get user from database
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
+    const user = await currentUser();
 
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      return NextResponse.json(
+          { error: "User not authenticated." },
+          { status: 401 }
+      );
     }
 
-    // Get the folder with its contents
+    const { folderId } = await params;
+
+    const existingUser = await db.user.findUnique({
+      where: { clerkUserId: user.id },
+    });
+
+    if (!existingUser) {
+      return NextResponse.json(
+          { error: "User not exist in DB." },
+          { status: 401 }
+      ); 
+    }
+
     const folder = await db.folder.findFirst({
       where: {
         id: folderId,
-        userId: user.id,
+        userId: existingUser.id,
       },
       include: {
         parent: {
@@ -66,21 +66,31 @@ export async function GET(
     });
 
     if (!folder) {
-      return new NextResponse("Folder not found", { status: 404 });
+      return NextResponse.json(
+          { error: "Folder not found." },
+          { status: 404 }
+      ); 
     }
 
-    return NextResponse.json(folder);
+    return NextResponse.json(folder, { status: 200 });
 
   } catch (error) {
-    console.error("[FOLDER_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    console.error(error);
+    return NextResponse.json(
+      {
+          error: (error as Error).message || "Unknown error occurred while adding project."
+      },
+      {
+          status: 500
+      }
+    );
   }
 }
 
 // PATCH /api/folders/[folderId] - Update folder name or move to different parent
 export async function PATCH(
   req: Request,
-  { params }: { params: { folderId: string } }
+  { params }: { params: Promise<{ folderId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -89,7 +99,7 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { folderId } = params;
+    const { folderId } = await params;
     const body = await req.json();
     const { name, parentId } = body;
 
@@ -183,7 +193,7 @@ export async function PATCH(
 // DELETE /api/folders/[folderId] - Delete a folder
 export async function DELETE(
   req: Request,
-  { params }: { params: { folderId: string } }
+  { params }: { params: Promise<{ folderId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -192,7 +202,7 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { folderId } = params;
+    const { folderId } = await params;
 
     // Get user from database
     const user = await db.user.findUnique({
@@ -225,7 +235,7 @@ export async function DELETE(
 
     // Check if folder has contents
     if (folder._count.children > 0 || folder._count.projects > 0) {
-      return new NextResponse("Cannot delete folder with contents", { status: 400 });
+      return NextResponse.json({"message": "Cannot delete folder with contents"}, { status: 203 });
     }
 
     // Delete the folder

@@ -58,7 +58,7 @@ model Folder {
   id        String   @id @default(uuid())
   name      String
   userId    String
-  parentId  String?  // For nested folders
+  parentId  String? 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

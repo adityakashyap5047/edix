@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 // GET /api/folders/[folderId]/breadcrumb - Get folder breadcrumb path
 export async function GET(
   req: Request,
-  { params }: { params: { folderId: string } }
+  { params }: { params: Promise<{ folderId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -14,7 +14,7 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { folderId } = params;
+    const { folderId } = await params;
 
     // Get user from database
     const user = await db.user.findUnique({

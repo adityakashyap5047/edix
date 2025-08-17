@@ -1,25 +1,27 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-// GET /api/folders - Get all folders for the authenticated user
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const user = await currentUser();
+
+    if (!user) {
+      return NextResponse.json(
+          { error: "User not authenticated." },
+          { status: 401 }
+      );
     }
 
     const url = new URL(req.url);
     const parentId = url.searchParams.get("parentId") || null;
 
     // Get user from database
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
+    const existingUser = await db.user.findUnique({
+      where: { clerkUserId: user.id },
     });
 
-    if (!user) {
+    if (!existingUser) {
       return new NextResponse("User not found", { status: 404 });
     }
 
@@ -27,7 +29,7 @@ export async function GET(req: Request) {
     const [folders, projects] = await Promise.all([
       db.folder.findMany({
         where: {
-          userId: user.id,
+          userId: existingUser.id,
           parentId: parentId,
         },
         include: {
@@ -44,7 +46,7 @@ export async function GET(req: Request) {
       }),
       db.project.findMany({
         where: {
-          userId: user.id,
+          userId: existingUser.id,
           folderId: parentId,
         },
         orderBy: {
