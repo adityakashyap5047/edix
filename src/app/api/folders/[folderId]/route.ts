@@ -165,7 +165,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const duplicateFolder = await db.folder.findFirst({
         where: {
           name,
-          userId: user.id,
+          userId: existingUser.id,
           parentId: targetParentId,
           id: { not: folderId }, // Exclude current folder
         },
@@ -242,7 +242,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const folder = await db.folder.findFirst({
       where: {
         id: folderId,
-        userId: user.id,
+        userId: existingUser.id,
       },
       include: {
         _count: {

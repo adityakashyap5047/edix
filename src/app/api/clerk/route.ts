@@ -2,47 +2,52 @@ import { Webhook } from "svix";
 import { db } from "@/lib/prisma";
 import { NextRequest, NextResponse, } from "next/server";
 
+interface WebhookEvent {
+  data: {
+    id: string;
+    status?: string;
+    plan?: {
+      name: string;
+    };
+    payer?: {
+      user_id: string;
+    };
+    user_id?: string;
+  };
+  type: string;
+}
+
 const webhookSecret = process.env.CLERK_WEBHOOK_SECRET!;
 
 export async function POST(req: NextRequest) {
-
   const payload = await req.text();
   const headers = Object.fromEntries(req.headers.entries());
 
-  // const svixHeaders = {
-  //   "svix-id": req.headers["svix-id"] as string,
-  //   "svix-timestamp": req.headers["svix-timestamp"] as string,
-  //   "svix-signature": req.headers["svix-signature"] as string,
-  // };
-
   const wh = new Webhook(webhookSecret);
 
-  let evt;
+  let evt: WebhookEvent;
   try {
-    evt = wh.verify(payload, headers);
+    evt = wh.verify(payload, headers) as WebhookEvent;
   } catch (err) {
-    console.error("❌ Error verifying webhook:", err);
-    return new NextResponse("Invalid signature", { status: 400 });
+    console.error("Error verifying webhook:", err);
+    return NextResponse.json("Invalid signature", { status: 400 });
   }
 
-  // const wh = new Webhook(webhookSecret);
-  // let evt: any;
-
-  // try {
-  //   evt = wh.verify(payload, svixHeaders);
-  // } catch (err) {
-  //   console.error("Webhook verification failed", err);
-  //   return NextResponse.json({ error: "Invalid webhook" }, { status: 400 });
-  // }
-
-  const eventId = evt.data.id;
   const eventType = evt.type;
   const data = evt.data;
-  console.log("**********************************", evt.type, " - ", evt.data.status);
-  console.log(evt)
+  
+  let currentPlan: "FREE" | "PRO" | undefined;
+   
+  if(eventType === "subscriptionItem.active" && data.plan?.name === "PRO"){
+    currentPlan = "PRO";
+  } else if (eventType === "subscriptionItem.active" && data.plan?.name === "Free") {
+    currentPlan = "FREE";
+  } else {
+    currentPlan = undefined;
+  }
+
 
   try {
-    // find user
     const clerkUserId = data?.payer?.user_id ?? data?.id ?? data?.user_id;
     if (!clerkUserId) {
       return NextResponse.json({ error: "Missing user id in webhook" }, { status: 400 });
@@ -53,33 +58,20 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      console.warn("User not found for clerkUserId", clerkUserId);
-      return NextResponse.json({ received: true }, { status: 200 });
-    }
-    // idempotency check
-    if (user.lastWebhookId === eventId) {
+      console.warn("User Does Not Exist in DB", clerkUserId);
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
     let newPlan = user.plan;
 
-    if (eventType === "subscription.created" || eventType === "subscription.updated") {
-      const status = data.status; // "active" | "trialing" | "past_due" | "canceled"
-      if (status === "active" || status === "trialing") {
-        newPlan = "PRO"; // upgrade
-      } else {
-        newPlan = "FREE"; // fallback if canceled/past_due
-      }
-    } else if (eventType === "subscription.deleted") {
-      newPlan = "FREE"; // downgrade
-    }
+    if (currentPlan) {
+      newPlan = currentPlan;
+    } 
 
-    // find user
     await db.user.update({
       where: { clerkUserId },
       data: {
         plan: newPlan,
-        lastWebhookId: eventId,
       },
     });
 

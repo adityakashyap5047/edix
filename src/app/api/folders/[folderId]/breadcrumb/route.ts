@@ -29,8 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ fold
     }
 
     // Build breadcrumb path
-    const breadcrumb = await buildBreadcrumb(folderId, user.id);
-
+    const breadcrumb = await buildBreadcrumb(folderId, existingUser.id);
     if (!breadcrumb) {
       return NextResponse.json(
         { error: "Folder not found" },

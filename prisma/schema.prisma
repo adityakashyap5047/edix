@@ -22,7 +22,6 @@ model User {
   plan             Plan     @default(FREE)
   projectsUsed     Int      @default(0)
   exportsThisMonth Int      @default(0)
-  lastWebhookId    String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
