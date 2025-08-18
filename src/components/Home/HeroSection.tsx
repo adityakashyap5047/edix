@@ -37,7 +37,7 @@ const HeroSection = () => {
                         Start Creating
                     </Button>
                 </Link>
-                <Link href={"https://github.com/adityakashyap5047/edix"} target="_blank">
+                <Link href={"https://github.com/adityakashyap5047/Edix"} target="_blank">
                     <Button variant={"glass"} size={"xl"}>
                         ⭐ Star Us
                     </Button>

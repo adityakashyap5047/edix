@@ -28,7 +28,7 @@ Edix is a sleek, Next.js-powered image editing app built for creators, developer
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/adityakashyap5047/edix.git
+git clone https://github.com/adityakashyap5047/Edix.git
 cd edix
 npm install
 npm run dev
