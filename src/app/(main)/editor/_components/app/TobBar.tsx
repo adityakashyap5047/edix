@@ -600,6 +600,7 @@ const TopBar = ({project}: {project: Project}) => {
                 setShowUpgradeModal(false);
                 setRestrictedTool(null);
             }}
+            subscriptionRedirectUrl={`/editor/${project.id}`}
             restrictedTool={restrictedTool}
             reason={
                 restrictedTool === "export" 

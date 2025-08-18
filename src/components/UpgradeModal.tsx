@@ -10,9 +10,10 @@ interface UpgradeModalProps {
   onClose: () => void;
   restrictedTool: ToolId;
   reason?: string;
+  subscriptionRedirectUrl?: string;
 }
 
-const UpgradeModal = ({isOpen, onClose, restrictedTool, reason}: UpgradeModalProps) => {
+const UpgradeModal = ({isOpen, onClose, restrictedTool, reason, subscriptionRedirectUrl = "/"}: UpgradeModalProps) => {
 
   const getToolName = (toolId: ToolId) => {
     return TOOL_NAMES[toolId] || "Premium Feature";
@@ -44,7 +45,9 @@ const UpgradeModal = ({isOpen, onClose, restrictedTool, reason}: UpgradeModalPro
             </Alert>
           )}
 
-          <PricingTable />
+          <PricingTable 
+            newSubscriptionRedirectUrl={subscriptionRedirectUrl}
+          />
         </div>
 
         <DialogFooter className="justify-center">

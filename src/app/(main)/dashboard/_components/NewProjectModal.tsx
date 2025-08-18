@@ -287,6 +287,7 @@ const NewProjectModal = ({ isOpen, onClose, projects, folderId, projectCount }: 
       <UpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
+        subscriptionRedirectUrl="/dashboard"
         restrictedTool="projects"
         reason="Free plan is limited to 3 projects. Upgrade to pro for unlimited projects and access to all AI editing tools."
       />

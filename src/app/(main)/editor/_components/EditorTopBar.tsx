@@ -456,6 +456,7 @@ const EditorTopBar = ({project}: {project: Project}) => {
 
         {restrictedTool && <UpgradeModal
             isOpen={showUpgradeModal}
+            subscriptionRedirectUrl={`/editor/${project.id}`}
             onClose={() => {
                 setShowUpgradeModal(false);
                 setRestrictedTool(null);
