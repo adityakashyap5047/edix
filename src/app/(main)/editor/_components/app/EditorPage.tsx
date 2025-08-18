@@ -69,12 +69,12 @@ const EditorPage = ({project}: {project: Project}) => {
               <EditorSideBar width={250} project={project} />
             </div>
           )}
-
+          
           {/* Editor area */}
           <div className="flex-1 bg-slate-800 flex flex-col">
               {/* Canvas Editor takes available space */}
               <div className="flex-1">
-                  <Editor project={project} />
+                <Editor project={project} />
               </div>
               
               {/* Bottom EditorSideBar - visible only up to 610px */}
@@ -82,7 +82,7 @@ const EditorPage = ({project}: {project: Project}) => {
                 <div 
                     className="bg-slate-900 border-t overflow-y-auto"
                     style={{ 
-                        height: Math.min(screenHeight * 0.35, 280), // 35% of available height, max 280px
+                        height: Math.min(screenHeight * 0.35, 280),
                         maxHeight: '280px' // Maximum height limit
                     }}
                 >

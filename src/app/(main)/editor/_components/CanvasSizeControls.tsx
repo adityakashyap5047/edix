@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { useCanvas } from "@/context/Context";
 import { Project } from "@/types";
-import axios from "axios";
 import { 
     ArrowUp, 
     ArrowDown, 
@@ -14,7 +13,7 @@ import {
     RotateCcw, 
     ChevronDown 
 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 
 interface CanvasSizeControlsProps {
@@ -25,197 +24,38 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
     const { canvasEditor } = useCanvas();
     const [canvasControlsOpen, setCanvasControlsOpen] = useState<boolean>(false);
     const [buttonPressed, setButtonPressed] = useState<string | null>(null);
-    const debouncedSaveRef = useRef<NodeJS.Timeout | undefined>(undefined);
-    const resizeTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
     // Get container dimensions and limits
     const getCanvasLimits = () => {
         if (!canvasEditor) {
-            return { maxWidth: 800, maxHeight: 600, minWidth: 50, minHeight: 50 };
+            return { maxWidth: 1000, maxHeight: 700, minWidth: 50, minHeight: 50 };
         }
+
+        const canvasElement = canvasEditor.getElement();
+        const container = canvasElement.closest('.bg-secondary');
         
-        // Try to get the actual canvas container element for more accurate measurements
-        const canvasContainer = canvasEditor.getElement().parentElement;
-        
-        if (canvasContainer) {
-            // Use the actual container dimensions with responsive margins
-            const containerRect = canvasContainer.getBoundingClientRect();
-            
-            // More aggressive margin reduction for smaller screens
-            let margin;
-            if (window.innerWidth < 610) {
-                margin = 16; // Very minimal margin for small screens
-            } else if (window.innerWidth < 768) {
-                margin = 24; // Small margin for mobile
-            } else {
-                margin = 40; // Standard margin for larger screens
-            }
-            
-            const limits = {
-                maxWidth: Math.max(280, Math.floor(containerRect.width - margin)), // Lower minimum for very small screens
-                maxHeight: Math.max(200, Math.floor(containerRect.height - margin)), // Lower minimum for very small screens
-                minWidth: 50,
-                minHeight: 50
-            };
-            return limits;
+        if (!container) {
+            return { maxWidth: 1000, maxHeight: 700, minWidth: 50, minHeight: 50 };
         }
+
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        const margin = 40; 
         
-        // Fallback to viewport-based calculations with responsive margins
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        const availableWidth = containerWidth - margin;
+        const availableHeight = containerHeight - margin;
         
-        // Responsive margins based on screen size - more aggressive for small screens
-        let sidebarWidth, topBarHeight, rightMargin, bottomMargin;
-        
-        if (viewportWidth < 610) { // Very small screens
-            sidebarWidth = 0;       // No sidebar
-            topBarHeight = 50;      // Minimal top bar
-            rightMargin = 12;       // Very minimal margins
-            bottomMargin = 12;
-        } else if (viewportWidth < 768) { // Mobile
-            sidebarWidth = 0;       // No sidebar on mobile
-            topBarHeight = 60;      // Smaller top bar
-            rightMargin = 16;       // Minimal margins
-            bottomMargin = 16;
-        } else if (viewportWidth < 1024) { // Tablet
-            sidebarWidth = 200;     // Smaller sidebar
-            topBarHeight = 70;
-            rightMargin = 32;       // Reduced margins for tablet
-            bottomMargin = 32;
-        } else { // Desktop
-            sidebarWidth = 280;     // Full sidebar
-            topBarHeight = 80;
-            rightMargin = 60;
-            bottomMargin = 60;
-        }
-        
-        const availableWidth = viewportWidth - sidebarWidth - rightMargin - 20; // Reduced padding
-        const availableHeight = viewportHeight - topBarHeight - bottomMargin - 20; // Reduced padding
-        
+        // Set limits with good margins - these will be the max for both increment and reset
         const limits = {
-            maxWidth: Math.max(280, availableWidth),     // Lower minimum for very small screens
-            maxHeight: Math.max(200, availableHeight),   // Lower minimum for very small screens
+            maxWidth: availableWidth,
+            maxHeight: availableHeight,
             minWidth: 50,
             minHeight: 50
         };
         return limits;
     };
 
-    // Continuous button press handler
-    useEffect(() => {
-        if (!buttonPressed) return;
-
-        const interval = setInterval(() => {
-            if (buttonPressed === 'incHorz') {
-                handleIncHorz();
-            } else if (buttonPressed === 'incVert') {
-                handleIncVert();
-            } else if (buttonPressed === 'decHorz') {
-                handleDecHorz();
-            } else if (buttonPressed === 'decVert') {
-                handleDecVert();
-            }
-        }, 100);
-
-        return () => clearInterval(interval);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [buttonPressed]);
-
-    // Auto-save function for smooth operations
-    useEffect(() => {
-        if (!canvasEditor) return;
-        
-        if (debouncedSaveRef.current) {
-            clearTimeout(debouncedSaveRef.current);
-        }
-        
-        debouncedSaveRef.current = setTimeout(async () => {
-            try {
-                const canvasJSON = canvasEditor.toJSON();
-                await axios.post(`/api/projects/${project.id}`, {
-                    width: project.width,
-                    height: project.height,
-                    canvasState: canvasJSON,
-                    currentImageUrl: project.currentImageUrl,
-                    activeTransformations: project.activeTransformations,
-                    backgroundRemoved: project.backgroundRemoved,
-                });
-            } catch (error) {
-                console.error("Error auto-saving canvas:", error);
-            }
-        }, 1000);
-    }, [project.width, project.height, canvasEditor, project.id, project.currentImageUrl, project.activeTransformations, project.backgroundRemoved]);
-
-    // Auto-reset canvas size on initial mount and window resize
-    useEffect(() => {
-        if (!canvasEditor) return;
-        
-        const handleCanvasReset = () => {
-            // Longer delay to ensure all UI components are fully rendered and sized
-            setTimeout(() => {
-                handleResetCanvasSize();
-            }, 1500); // Increased delay for better stability
-        };
-        
-        // Handle window resize events to re-center canvas
-        const handleResize = () => {
-            // Debounce resize events
-            if (resizeTimeout.current) {
-                clearTimeout(resizeTimeout.current);
-            }
-            resizeTimeout.current = setTimeout(() => {
-                handleResetCanvasSize();
-            }, 300);
-        };
-        
-        // Initial reset
-        handleCanvasReset();
-        
-        // Listen for window resize events
-        window.addEventListener('resize', handleResize);
-        
-        // Also listen for orientation changes on mobile
-        window.addEventListener('orientationchange', () => {
-            setTimeout(handleResize, 500); // Delay for orientation change to complete
-        });
-        
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            window.removeEventListener('orientationchange', handleResize);
-            if (resizeTimeout.current) {
-                clearTimeout(resizeTimeout.current);
-            }
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [canvasEditor]); // Only run when canvas editor becomes available
-    
-    // Additional effect to reset when objects are loaded
-    useEffect(() => {
-        if (!canvasEditor) return;
-        
-        const checkAndResetIfNeeded = () => {
-            const objects = canvasEditor.getObjects();
-            if (objects.length > 0) {
-                // If we have objects but canvas is still small, reset
-                const canvasWidth = canvasEditor.getWidth();
-                const canvasHeight = canvasEditor.getHeight();
-                const { maxWidth, maxHeight } = getCanvasLimits();
-                
-                // If canvas is significantly smaller than it should be, reset
-                if (canvasWidth < maxWidth * 0.7 || canvasHeight < maxHeight * 0.7) {
-                    setTimeout(() => handleResetCanvasSize(), 1000);
-                }
-            }
-        };
-        
-        // Check after a delay to allow objects to load
-        const timer = setTimeout(checkAndResetIfNeeded, 2000);
-        
-        return () => clearTimeout(timer);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [canvasEditor, project.currentImageUrl]); // Also trigger when image changes
-
-    const handleResetCanvasSize = async () => {
+    const handleResetCanvasSize = useCallback(async () => {
         if (!canvasEditor) return;
         
         try {
@@ -257,28 +97,44 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
             
             canvasEditor.calcOffset();
             canvasEditor.requestRenderAll();
-            
-            // Save the updated state with preserved effects
-            const newCanvasJSON = canvasEditor.toJSON();
-            await axios.post(`/api/projects/${project.id}`, {
-                width: resetWidth,
-                height: resetHeight,
-                canvasState: newCanvasJSON,
-                currentImageUrl: project.currentImageUrl,
-                activeTransformations: project.activeTransformations,
-                backgroundRemoved: project.backgroundRemoved,
-            });
-            
-            // Update project dimensions
-            project.width = resetWidth;
-            project.height = resetHeight;
-            
-            toast.success(`Canvas reset to ${resetWidth}x${resetHeight}px with centered content`);
         } catch (error) {
             console.error("Error resetting canvas size:", error);
             toast.error("Failed to reset canvas size. Please try again.");
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canvasEditor]);
+
+    useEffect(() => {
+        const handleWindowResize = () => {
+            handleResetCanvasSize();
+        };
+
+        window.addEventListener('resize', handleWindowResize);
+        
+        return () => {
+            window.removeEventListener('resize', handleWindowResize);
+        };
+    }, [canvasEditor, handleResetCanvasSize]);
+
+    // Continuous button press handler
+    useEffect(() => {
+        if (!buttonPressed) return;
+
+        const interval = setInterval(() => {
+            if (buttonPressed === 'incHorz') {
+                handleIncHorz();
+            } else if (buttonPressed === 'incVert') {
+                handleIncVert();
+            } else if (buttonPressed === 'decHorz') {
+                handleDecHorz();
+            } else if (buttonPressed === 'decVert') {
+                handleDecVert();
+            }
+        }, 100);
+
+        return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [buttonPressed]);
 
     const handleIncHorz = async () => {
         if (!canvasEditor) {
@@ -290,7 +146,7 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
         const currentWidth = canvasEditor.getWidth();
         
         if (currentWidth >= maxWidth) {
-            toast.info(`Canvas is already at maximum width (${maxWidth}px)`);
+            toast.info(`Canvas is already at maximum width`);
             return;
         }
         
@@ -318,14 +174,8 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
             
             canvasEditor.calcOffset();
             canvasEditor.requestRenderAll();
-            
-            // Update project width immediately
-            project.width = newWidth;
-            
-            toast.success(`Canvas width increased to ${newWidth}px`);
-            
         } catch (error) {
-            console.error("❌ Error expanding canvas horizontally:", error);
+            console.error("Error expanding canvas horizontally:", error);
             toast.error("Failed to expand canvas horizontally");
         }
     };
@@ -340,11 +190,11 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
         const currentHeight = canvasEditor.getHeight();
         
         if (currentHeight >= maxHeight) {
-            toast.info(`Canvas is already at maximum height (${maxHeight}px)`);
+            toast.info(`Canvas is already at maximum height`);
             return;
         }
         
-        const increaseAmount = 50; // Larger increase for testing
+        const increaseAmount = 50;
         const newHeight = Math.min(maxHeight, currentHeight + increaseAmount);
         
         try {
@@ -368,14 +218,8 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
             
             canvasEditor.calcOffset();
             canvasEditor.requestRenderAll();
-            
-            // Update project height immediately
-            project.height = newHeight;
-            
-            toast.success(`Canvas height increased to ${newHeight}px`);
-            
         } catch (error) {
-            console.error("❌ Error expanding canvas vertically:", error);
+            console.error("Error expanding canvas vertically:", error);
             toast.error("Failed to expand canvas vertically");
         }
     };
@@ -416,10 +260,6 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
             
             canvasEditor.calcOffset();
             canvasEditor.requestRenderAll();
-            
-            // Update project width immediately
-            project.width = newWidth;
-            
         } catch (error) {
             console.error("Error decreasing canvas width:", error);
             toast.error("Failed to decrease canvas width");
@@ -462,10 +302,6 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
             
             canvasEditor.calcOffset();
             canvasEditor.requestRenderAll();
-            
-            // Update project height immediately
-            project.height = newHeight;
-            
         } catch (error) {
             console.error("Error decreasing canvas height:", error);
             toast.error("Failed to decrease canvas height");
@@ -507,7 +343,7 @@ export default function CanvasSizeControls({ project }: CanvasSizeControlsProps)
                                 <Grid3X3 className="h-4 w-4 text-blue-400" />
                                 <h3 className="text-white font-semibold text-sm">Canvas Controls</h3>
                                 <div className="ml-auto text-xs text-white/60 font-mono">
-                                    {project.width || 800} × {project.height || 600}px
+                                    {project.width || 800} x {project.height || 600}px
                                 </div>
                             </div>
                         </div>

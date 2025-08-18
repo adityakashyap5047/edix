@@ -13,6 +13,7 @@ const Editor = ({project}: {project: Project}) => {
     const [isResizing, setIsResizing] = useState<boolean>(false);
     const [resizeDirection, setResizeDirection] = useState<string>('');
     const [dragStart, setDragStart] = useState<{x: number, y: number, width: number, height: number}>({x: 0, y: 0, width: 0, height: 0});
+    const [smartMargin, setSmartMargin] = useState<string>('0px');
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -26,6 +27,31 @@ const Editor = ({project}: {project: Project}) => {
         isMountedRef.current = true;
         return () => {
             isMountedRef.current = false;
+        };
+    }, []);
+
+    // Smart margin calculation for browser vs mobile centering
+    useEffect(() => {
+        const calculateSmartMargin = () => {
+            const isSmallScreen = window.innerWidth <= 610;
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            
+            // Apply margin only for small screens on non-touch devices (browser resize)
+            setSmartMargin(isSmallScreen && !isTouchDevice ? '16px' : '0px');
+        };
+
+        // Calculate initial margin
+        calculateSmartMargin();
+
+        // Add resize listener for dynamic updates
+        const handleResize = () => {
+            calculateSmartMargin();
+        };
+
+        window.addEventListener('resize', handleResize);
+        
+        return () => {
+            window.removeEventListener('resize', handleResize);
         };
     }, []);
 
@@ -596,7 +622,13 @@ const Editor = ({project}: {project: Project}) => {
 
             <div className='absolute inset-0 w-full h-full flex items-center justify-center'>
                 {/* Canvas wrapper with resize handles */}
-                <div ref={canvasWrapperRef} className='relative flex-shrink-0'>
+                <div 
+                    ref={canvasWrapperRef} 
+                    className='relative flex-shrink-0'
+                    style={{
+                        marginRight: smartMargin
+                    }}
+                >
                     <canvas id="canvas" ref={canvasRef} className='border border-gray-300 block' />
                     
                     {/* Resize handles */}
