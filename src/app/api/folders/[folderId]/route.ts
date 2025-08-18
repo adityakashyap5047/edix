@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -88,40 +88,46 @@ export async function GET(request: NextRequest,{ params }: { params: Promise<{ f
 }
 
 // PATCH /api/folders/[folderId] - Update folder name or move to different parent
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ folderId: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ folderId: string }> }) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const user = await currentUser();
+
+    if (!user) {
+      return NextResponse.json(
+          { error: "User not authenticated." },
+          { status: 401 }
+      );
     }
 
     const { folderId } = await params;
-    const body = await req.json();
+    const body = await request.json();
     const { name, parentId } = body;
 
     // Get user from database
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
+    const existingUser = await db.user.findUnique({
+      where: { clerkUserId: user.id },
     });
 
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+    if (!existingUser) {
+      return NextResponse.json(
+          { error: "User not exist in DB." },
+          { status: 401 }
+      ); 
     }
 
     // Verify folder exists and belongs to user
     const existingFolder = await db.folder.findFirst({
       where: {
         id: folderId,
-        userId: user.id,
+        userId: existingUser.id,
       },
     });
 
     if (!existingFolder) {
-      return new NextResponse("Folder not found", { status: 404 });
+      return NextResponse.json(
+          { error: "Folder not found." },
+          { status: 404 }
+      ); 
     }
 
     // If moving to a new parent, verify it exists and prevent circular references
@@ -131,17 +137,23 @@ export async function PATCH(
         const parentFolder = await db.folder.findFirst({
           where: {
             id: parentId,
-            userId: user.id,
+            userId: existingUser.id,
           },
         });
 
         if (!parentFolder) {
-          return new NextResponse("Parent folder not found", { status: 404 });
+          return NextResponse.json(
+              { error: "Parent folder not found." },
+              { status: 404 }
+          );
         }
 
         // Prevent moving folder into itself or its descendants
         if (await isDescendant(folderId, parentId)) {
-          return new NextResponse("Cannot move folder into itself or its descendants", { status: 400 });
+          return NextResponse.json(
+              { error: "Cannot move folder into itself or its descendants." },
+              { status: 400 }
+          );
         }
       }
     }
@@ -160,7 +172,10 @@ export async function PATCH(
       });
 
       if (duplicateFolder) {
-        return new NextResponse("Folder with this name already exists", { status: 409 });
+        return NextResponse.json(
+          { error: "Folder with this name already exists." },
+          { status: 409 }
+        );
       }
     }
 
@@ -182,35 +197,45 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json(updatedFolder);
+    return NextResponse.json(updatedFolder, {status: 200});
 
   } catch (error) {
     console.error("[FOLDER_PATCH]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json(
+      {
+        error: (error as Error).message || "Unknown error occurred while updating folder."
+      },
+      {
+        status: 500
+      }
+    );
   }
 }
 
 // DELETE /api/folders/[folderId] - Delete a folder
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ folderId: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ folderId: string }> }) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const user = await currentUser();
+
+    if (!user) {
+      return NextResponse.json(
+          { error: "User not authenticated." },
+          { status: 401 }
+      );
     }
 
     const { folderId } = await params;
 
     // Get user from database
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
+    const existingUser = await db.user.findUnique({
+      where: { clerkUserId: user.id },
     });
 
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+    if (!existingUser) {
+      return NextResponse.json(
+          { error: "User not found." },
+          { status: 404 }
+      );
     }
 
     // Verify folder exists and belongs to user
@@ -230,12 +255,18 @@ export async function DELETE(
     });
 
     if (!folder) {
-      return new NextResponse("Folder not found", { status: 404 });
+      return NextResponse.json(
+        { error: "Folder not found." },
+        { status: 404 }
+      );
     }
 
     // Check if folder has contents
     if (folder._count.children > 0 || folder._count.projects > 0) {
-      return NextResponse.json({"message": "Cannot delete folder with contents"}, { status: 203 });
+      return NextResponse.json(
+        { error: "Cannot delete folder with contents." },
+        { status: 203 }
+      );
     }
 
     // Delete the folder
@@ -243,11 +274,18 @@ export async function DELETE(
       where: { id: folderId },
     });
 
-    return new NextResponse("Folder deleted", { status: 200 });
+    return NextResponse.json("Folder deleted", { status: 200 });
 
   } catch (error) {
     console.error("[FOLDER_DELETE]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json(
+      {
+        error: (error as Error).message || "Unknown error occurred while deleting folder."
+      },
+      {
+        status: 500
+      }
+    );
   }
 }
 

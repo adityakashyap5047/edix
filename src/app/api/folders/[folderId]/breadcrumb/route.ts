@@ -1,42 +1,54 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // GET /api/folders/[folderId]/breadcrumb - Get folder breadcrumb path
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ folderId: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ folderId: string }> }) {
   try {
-    const { userId } = await auth();
+    const user = await currentUser();
     
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    if (!user) {
+      return NextResponse.json(
+          { error: "User not authenticated." },
+          { status: 401 }
+      );
     }
 
     const { folderId } = await params;
 
     // Get user from database
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
+    const existingUser = await db.user.findUnique({
+      where: { clerkUserId: user.id },
     });
 
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+    if (!existingUser) {
+      return NextResponse.json(
+          { error: "User not exist in DB." },
+          { status: 401 }
+      ); 
     }
 
     // Build breadcrumb path
     const breadcrumb = await buildBreadcrumb(folderId, user.id);
 
     if (!breadcrumb) {
-      return new NextResponse("Folder not found", { status: 404 });
+      return NextResponse.json(
+        { error: "Folder not found" },
+        { status: 404 }
+      ); 
     }
 
-    return NextResponse.json({ breadcrumb });
+    return NextResponse.json({ breadcrumb }, { status: 200 });
 
-  } catch (error) {
-    console.error("[FOLDER_BREADCRUMB]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+  } catch (error: unknown) {
+      return NextResponse.json(
+          {
+              error: (error as Error).message || "Unknown error occurred while building Breadcrumb."
+          },
+          {
+              status: 500
+          }
+      );
   }
 }
 
