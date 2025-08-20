@@ -41,48 +41,49 @@ Edix is a professional-grade, AI-powered image editing platform built with Next.
 
 <div align="center">
 
-### **✨ Main Dashboard & Project Management**
-<img src="public/project/edix-1.png" alt="Edix Dashboard" width="800"/>
+### **✨ Home Page**
+<img src="public/project/edix-1.png" alt="Home Page" width="800"/>
 
-### **🎨 Advanced Image Editor Interface**
-<img src="public/project/edix-2.png" alt="Edix Editor Interface" width="800"/>
+### **🎨 User Dashboard**
+<img src="public/project/edix-2.png" alt="User Dashboard" width="800"/>
 
-### **🧠 AI-Powered Tools in Action**
-<img src="public/project/edix-3.png" alt="AI Tools" width="800"/>
+### **🆕 New Project**
+<img src="public/project/edix-3.png" alt="New Project" width="800"/>
 
-### **📱 Responsive Design - Mobile & Tablet**
-<img src="public/project/edix-4.png" alt="Mobile Interface" width="800"/>
+### **📁 Your Projects**
+<img src="public/project/edix-4.png" alt="Your Projects" width="800"/>
 
 ### **🎯 Professional Editing Workspace**
-<img src="public/project/edix-5.png" alt="Professional Workspace" width="800"/>
+<img src="public/project/edix-5.png" alt="Professional workspace with layer management, advanced color controls, and precision editing tools" width="800"/>
 
-### **🖼️ Background Library & Asset Management**
-<img src="public/project/edix-6.png" alt="Background Library" width="800"/>
+### **💳 Subscription Plan**
+<img src="public/project/edix-6.png" alt="Subscription Plan" width="800"/>
 
 ### **⚙️ Advanced Settings & Controls**
-<img src="public/project/edix-7.png" alt="Advanced Controls" width="800"/>
+<img src="public/project/edix-7.png" alt="Advanced image settings Controls" width="800"/>
 
-### **💎 Premium Features & Pro Tools**
-<img src="public/project/edix-8.png" alt="Premium Features" width="800"/>
-
-### **📊 User Analytics & Project Stats**
-<img src="public/project/edix-9.png" alt="Analytics Dashboard" width="800"/>
+### **📱 Mobile Responsive**
+<div align="center" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+<img src="public/project/edix-8.png" alt="Home Page" width="250" style="max-width: 100%; height: auto;"/>
+<img src="public/project/edix-9.png" alt="User Dashboard" width="250" style="max-width: 100%; height: auto;"/>
+<img src="public/project/edix-10.png" alt="Professional Editing Workspace" width="250" style="max-width: 100%; height: auto;"/>
+</div>
 
 ### **🔧 Clean Code Architecture**
 <details>
 <summary>Click to view code structure</summary>
 
-#### **TypeScript Implementation**
-<img src="public/project/code-1.png" alt="TypeScript Code" width="800"/>
-
-#### **React Components**
-<img src="public/project/code-2.png" alt="React Components" width="800"/>
+#### **Canvas Editor**
+<img src="public/project/code-1.png" alt="TypeScript canvas editor implementation with Fabric.js integration and custom hooks" width="800"/>
 
 #### **API Integration**
-<img src="public/project/code-3.png" alt="API Code" width="800"/>
+<img src="public/project/code-2.png" alt="Next.js API routes for ImageKit, Clerk webhooks, and Unsplash background images" width="800"/>
 
-#### **Database Schema**
-<img src="public/project/code-4.png" alt="Database Schema" width="800"/>
+#### **Custom Hooks**
+<img src="public/project/code-3.png" alt="React custom hooks for canvas management, user authentication, and image processing" width="800"/>
+
+#### **React Components**
+<img src="public/project/code-4.png" alt="Modular React components with TypeScript, Tailwind CSS, and responsive design patterns" width="800"/>
 
 </details>
 
