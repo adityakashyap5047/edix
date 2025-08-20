@@ -1,7 +1,23 @@
 # <img height="25" src="public/edix/edix.png"> Edix — AI-Powered Image Editor
 
 **Edit. Enhance. Express.**  
-Edix is a professional-grade, AI-powered image editing platform built with Next.js. Designed for creators, developers, marketers, and everyday users who demand powerful editing capabilities with intuitive design. Transform your images with cutting-edge AI tools, advanced editing features, and seamless cloud integration — all from your browser.
+Edix is a professional-grade, AI-powered image editing platform built with Next.js. Designed for creators, developers, marketers, and everyday users who demand powerful editing capabilities with intuitive design. Transform your images with cutting-edge AI tools, advance**Made with ❤️ and l---
+
+## 📞 Support & Community
+
+- 📧 **Email Support**: [Aditya Kumar](mailto:adityakashyap5047@gmail.com)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/adityakashyap5047/Edix/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/adityakashyap5047/Edix/discussions)
+
+---
+
+<div align="center">
+
+**Made with ❤️ and lots of ☕ by the Edix Team**
+
+[🚀 Try Live Demo](https://edix.vercel.app/) • [⭐ Star this repo](https://github.com/adityakashyap5047/Edix) • [🐛 Report Bug](https://github.com/adityakashyap5047/Edix/issues) • [💡 Request Feature](https://github.com/adityakashyap5047/Edix/discussions)
+
+</div>
 
 <div align="center">
 
@@ -10,6 +26,65 @@ Edix is a professional-grade, AI-powered image editing platform built with Next.
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Prisma](https://img.shields.io/badge/Prisma-6.12.0-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![Fabric.js](https://img.shields.io/badge/Fabric.js-6.7.1-FF6B6B?style=for-the-badge&logo=javascript)](http://fabricjs.com/)
+[![Unsplash](https://img.shields.io/badge/Unsplash-API-FF5722?style=for-the-badge&logo=unsplash)](https://unsplash.com/developers)
+
+**🚀 [Live Demo - Try Edix Now!](https://edix.vercel.app/)**
+
+### Quick Navigation
+[🌟 Live Showcase](#-live-website-showcase) • [✨ Features](#-features) • [💎 Pricing](#-subscription-plans) • [🛠️ Tech Stack](#️-tech-stack) • [📦 Setup](#-installation--setup) • [🔌 API](#-api-integrations)
+
+</div>
+
+---
+
+## 🌟 Live Website Showcase
+
+<div align="center">
+
+### **✨ Main Dashboard & Project Management**
+<img src="public/project/edix-1.png" alt="Edix Dashboard" width="800"/>
+
+### **🎨 Advanced Image Editor Interface**
+<img src="public/project/edix-2.png" alt="Edix Editor Interface" width="800"/>
+
+### **🧠 AI-Powered Tools in Action**
+<img src="public/project/edix-3.png" alt="AI Tools" width="800"/>
+
+### **📱 Responsive Design - Mobile & Tablet**
+<img src="public/project/edix-4.png" alt="Mobile Interface" width="800"/>
+
+### **🎯 Professional Editing Workspace**
+<img src="public/project/edix-5.png" alt="Professional Workspace" width="800"/>
+
+### **🖼️ Background Library & Asset Management**
+<img src="public/project/edix-6.png" alt="Background Library" width="800"/>
+
+### **⚙️ Advanced Settings & Controls**
+<img src="public/project/edix-7.png" alt="Advanced Controls" width="800"/>
+
+### **💎 Premium Features & Pro Tools**
+<img src="public/project/edix-8.png" alt="Premium Features" width="800"/>
+
+### **📊 User Analytics & Project Stats**
+<img src="public/project/edix-9.png" alt="Analytics Dashboard" width="800"/>
+
+### **🔧 Clean Code Architecture**
+<details>
+<summary>Click to view code structure</summary>
+
+#### **TypeScript Implementation**
+<img src="public/project/code-1.png" alt="TypeScript Code" width="800"/>
+
+#### **React Components**
+<img src="public/project/code-2.png" alt="React Components" width="800"/>
+
+#### **API Integration**
+<img src="public/project/code-3.png" alt="API Code" width="800"/>
+
+#### **Database Schema**
+<img src="public/project/code-4.png" alt="Database Schema" width="800"/>
+
+</details>
 
 </div>
 
@@ -193,7 +268,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 2. Copy the publishable and secret keys from your Clerk dashboard
 3. **Set up webhooks for user synchronization:**
    - Go to Webhooks in your Clerk dashboard
-   - Add endpoint: `https://yourdomain.com/api/clerk`
+   - Add endpoint: `https://edix.vercel.app/api/clerk`
    - Select events
    - Copy the webhook secret for `CLERK_WEBHOOK_SECRET`
 
