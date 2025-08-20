@@ -282,11 +282,6 @@ Optimized image storage, processing, and delivery.
 ---
 
 ## 🤝 Contributing
-```
-
-
-
-## 🤝 Contributing
 
 We welcome contributions from the community! Here's how you can help:
 
@@ -330,25 +325,22 @@ Special thanks to the amazing open-source community and these fantastic projects
 - **[Tailwind CSS](https://tailwindcss.com/)** - For beautiful, utility-first styling
 - **[Prisma](https://www.prisma.io/)** - For type-safe database operations
 - **[Clerk](https://clerk.com/)** - For seamless authentication
-- **[Vercel](https://vercel.com/)** - For effortless deployment and hosting
 
 ---
 
 ## 🧑‍💻 Author
 
 **Aditya Kashyap**
-- 🌐 Website: [Coming Soon]
-- 📧 Email: [Your Email]
-- 🐙 GitHub: [@adityakashyap5047](https://github.com/adityakashyap5047)
-- 💼 LinkedIn: [Your LinkedIn]
+- 🌐 Website: [Aditya Kumar](https://adityakashyap5047.vercel.app/)
+- 📧 Email: [Aditya Kumar](mailto:adityakashyap5047@gmail.com)
+- 🐙 GitHub: [Aditya Kumar](https://github.com/adityakashyap5047)
+- 💼 LinkedIn: [Aditya Kumar](https://linkedin.com/in/adityakashyap5047)
 
 ---
 
 ## 📞 Support & Community
 
-- 📧 **Email Support**: support@edix.com
-- 💬 **Discord Community**: [Join our Discord](https://discord.gg/edix)
-- 📖 **Documentation**: [docs.edix.com](https://docs.edix.com)
+- 📧 **Email Support**: [Aditya Kumar](mailto:adityakashyap5047@gmail.com)
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/adityakashyap5047/Edix/issues)
 - 💡 **Feature Requests**: [GitHub Discussions](https://github.com/adityakashyap5047/Edix/discussions)
 
