@@ -193,8 +193,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 2. Copy the publishable and secret keys from your Clerk dashboard
 3. **Set up webhooks for user synchronization:**
    - Go to Webhooks in your Clerk dashboard
-   - Add endpoint: `https://yourdomain.com/api/webhooks/clerk`
-   - Select events: `user.created`, `user.updated`, `user.deleted`
+   - Add endpoint: `https://yourdomain.com/api/clerk`
+   - Select events
    - Copy the webhook secret for `CLERK_WEBHOOK_SECRET`
 
 #### **🖼️ Unsplash Setup (Background Images)**
@@ -318,14 +318,6 @@ We welcome contributions from the community! Here's how you can help:
 ## 📄 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-**What this means:**
-- Commercial use allowed
-- Modification allowed
-- Distribution allowed
-- Private use allowed
-- No warranty provided
-- No liability accepted
 
 ---
 
