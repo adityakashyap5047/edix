@@ -1,23 +1,9 @@
 # <img height="25" src="public/edix/edix.png"> Edix — AI-Powered Image Editor
 
 **Edit. Enhance. Express.**  
-Edix is a professional-grade, AI-powered image editing platform built with Next.js. Designed for creators, developers, marketers, and everyday users who demand powerful editing capabilities with intuitive design. Transform your images with cutting-edge AI tools, advance**Made with ❤️ and l---
-
-## 📞 Support & Community
-
-- 📧 **Email Support**: [Aditya Kumar](mailto:adityakashyap5047@gmail.com)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/adityakashyap5047/Edix/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/adityakashyap5047/Edix/discussions)
+Edix is a professional-grade, AI-powered image editing platform built with Next.js. Designed for creators, developers, marketers, and everyday users who demand powerful editing capabilities with intuitive design. Transform your images with cutting-edge AI tools.
 
 ---
-
-<div align="center">
-
-**Made with ❤️ and lots of ☕ by the Edix Team**
-
-[🚀 Try Live Demo](https://edix.vercel.app/) • [⭐ Star this repo](https://github.com/adityakashyap5047/Edix) • [🐛 Report Bug](https://github.com/adityakashyap5047/Edix/issues) • [💡 Request Feature](https://github.com/adityakashyap5047/Edix/discussions)
-
-</div>
 
 <div align="center">
 
